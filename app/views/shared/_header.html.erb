@@ -1,0 +1,47 @@
+<nav id="main-header" class="sticky top-0 z-50 bg-gray-900 shadow-md">
+  <div class="mx-auto max-w-7xl px-4">
+    <div class="flex h-16 items-center justify-between">
+      <!-- Logo -->
+      <div class="flex items-center space-x-6">
+        <%= link_to root_path, class: "flex items-center space-x-3" do %>
+          <img src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
+               class="h-8 w-8" />
+          <span class="text-white font-semibold text-lg">
+            Ticket Tracking
+          </span>
+        <% end %>
+        <!-- Menu links only after login -->
+        <% if logged_in? %>
+          <div class="hidden sm:flex space-x-4">
+            <% if current_user.can_create_project? %>
+              <%= link_to "Projects", projects_path, class: "text-gray-300 hover:text-white px-3 py-2 rounded-md hover:bg-white/10" %>
+            <% end %>
+            <%# <%= link_to "Users", users_path, class: "text-white px-3 py-2 rounded-md hover:bg-white/10" %> %>
+            <%= link_to "Profile", user_path(current_user), class: "text-gray-300 hover:text-white px-3 py-2 rounded-md hover:bg-white/10" %>
+          </div>
+        <% end %>
+      </div>
+      <!-- Right side -->
+      <div class="flex items-center space-x-4">
+        <% if logged_in? %>
+          <span class="text-sm text-gray-300 hidden sm:block">
+            <%= current_user.name %>
+          </span>
+          <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e"
+               class="h-8 w-8 rounded-full border border-white/20" />
+          <%= button_to "Logout",
+                logout_path,
+                method: :delete,
+                class: "cursor-pointer bg-red-500 text-white text-sm px-3 py-1.5 rounded-md" %>
+        <% else %>
+          <%= link_to "Login",
+                login_path,
+                class: "text-gray-300 px-3 py-2 rounded-md" %>
+          <%= link_to "Sign up",
+                signup_path,
+                class: "bg-indigo-500 text-white px-4 py-2 rounded-md text-sm font-medium" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</nav>

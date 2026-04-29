@@ -4,7 +4,16 @@ class ProjectsController < ApplicationController
   before_action :set_project, only: [ :show, :edit, :update, :destroy, :remove_member ]
 
   def index
-    @projects = current_user.created_projects.includes(project_members: :user)
+    @projects =
+      if current_user.can_create_project?
+        current_user.created_projects.includes(project_members: :user)
+      else
+        Project
+          .joins(:project_members)
+          .where(project_members: { user_id: current_user.id, is_active: true })
+          .includes(project_members: :user)
+          .distinct
+      end
   end
 
   def show
@@ -23,7 +32,7 @@ class ProjectsController < ApplicationController
       create_creator_as_manager
       sync_project_members
 
-      redirect_to @project, notice: "Project created successfully."
+      redirect_to project_path(@project), notice: "Project created successfully."
     else
       @users = User.where.not(id: current_user.id)
       render :new, status: :unprocessable_entity
@@ -71,7 +80,16 @@ class ProjectsController < ApplicationController
   private
 
   def set_project
-    @project = current_user.created_projects.find(params[:id])
+    @project =
+      if current_user.can_create_project?
+        current_user.created_projects.find(params[:id])
+      else
+        Project
+          .joins(:project_members)
+          .where(project_members: { user_id: current_user.id, is_active: true })
+          .distinct
+          .find(params[:id])
+      end
   end
 
   def require_project_creator
@@ -140,7 +158,7 @@ class ProjectsController < ApplicationController
   def sync_roles_for_member(member, selected_roles, keep_manager:)
     # Remove developer / QA roles first
     member.project_member_roles
-          .joins(:role)
+          .joins(:role) 
           .where(roles: { name: allowed_member_roles })
           .destroy_all
 

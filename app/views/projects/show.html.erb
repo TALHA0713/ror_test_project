@@ -21,16 +21,18 @@
               Created <%= @project.created_at.strftime("%d %b %Y") %>
             </p>
           </div>
-          <div class="flex gap-3">
-            <%= link_to "Edit Project",
+          <% if current_user == @project.created_by_user %>
+            <div class="flex gap-3">
+              <%= link_to "Edit Project",
                 edit_project_path(@project),
                 class: "bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-3 rounded-xl font-semibold transition" %>
-            <%= button_to "Delete",
+              <%= button_to "Delete",
                 project_path(@project),
                 method: :delete,
                 data: { turbo_confirm: "Are you sure?" },
                 class: "bg-red-500 hover:bg-red-600 text-white px-5 py-3 rounded-xl font-semibold transition" %>
-          </div>
+            </div>
+          <% end %>
         </div>
       </div>
     </div>
@@ -52,78 +54,80 @@
       </div>
     </div>
     <!-- Members Table -->
-    <div class="rounded-3xl border border-white/10 bg-white/10 backdrop-blur-xl shadow-2xl overflow-hidden">
-      <div class="p-6 border-b border-white/10 flex items-center justify-between">
-        <div>
-          <h2 class="text-2xl font-bold text-white">Project Members</h2>
-          <p class="text-gray-400 text-sm mt-1">Users assigned to this project.</p>
-        </div>
-        <%= link_to "Manage Members",
+    <% if current_user == @project.created_by_user %>
+      <div class="rounded-3xl border border-white/10 bg-white/10 backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div class="p-6 border-b border-white/10 flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-bold text-white">Project Members</h2>
+            <p class="text-gray-400 text-sm mt-1">Users assigned to this project.</p>
+          </div>
+          <%= link_to "Manage Members",
             edit_project_path(@project),
             class: "bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl border border-white/10 text-sm transition" %>
-      </div>
-      <% if @project_members.any? %>
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-white/10">
-            <thead class="bg-white/5">
-              <tr>
-                <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-300">Member</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-300">Email</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-300">Roles</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-300">Joined</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-white/10">
-              <% @project_members.each do |member| %>
-                <tr class="hover:bg-white/5 transition">
-                  <td class="px-6 py-5">
-                    <div class="flex items-center gap-3">
-                      <div class="h-10 w-10 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-bold border border-indigo-400/20">
-                        <%= member.user.name.first.upcase %>
+        </div>
+        <% if @project_members.any? %>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-white/10">
+              <thead class="bg-white/5">
+                <tr>
+                  <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-300">Member</th>
+                  <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-300">Email</th>
+                  <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-300">Roles</th>
+                  <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-300">Joined</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-white/10">
+                <% @project_members.each do |member| %>
+                  <tr class="hover:bg-white/5 transition">
+                    <td class="px-6 py-5">
+                      <div class="flex items-center gap-3">
+                        <div class="h-10 w-10 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-bold border border-indigo-400/20">
+                          <%= member.user.name.first.upcase %>
+                        </div>
+                        <div>
+                          <p class="text-white font-semibold"><%= member.user.name %></p>
+                          <% if member.user == @project.created_by_user %>
+                            <p class="text-indigo-300 text-xs mt-1">Project Creator</p>
+                          <% end %>
+                        </div>
                       </div>
-                      <div>
-                        <p class="text-white font-semibold"><%= member.user.name %></p>
-                        <% if member.user == @project.created_by_user %>
-                          <p class="text-indigo-300 text-xs mt-1">Project Creator</p>
-                        <% end %>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-6 py-5 text-gray-300 break-all">
-                    <%= member.user.email %>
-                  </td>
-                  <td class="px-6 py-5">
-                    <div class="flex flex-wrap gap-2">
-                      <% if member.roles.any? %>
-                        <% member.roles.each do |role| %>
-                          <span class="px-3 py-1 rounded-full bg-indigo-400/10 text-indigo-300 border border-indigo-400/20 text-xs">
-                            <%= role.name.capitalize %>
+                    </td>
+                    <td class="px-6 py-5 text-gray-300 break-all">
+                      <%= member.user.email %>
+                    </td>
+                    <td class="px-6 py-5">
+                      <div class="flex flex-wrap gap-2">
+                        <% if member.roles.any? %>
+                          <% member.roles.each do |role| %>
+                            <span class="px-3 py-1 rounded-full bg-indigo-400/10 text-indigo-300 border border-indigo-400/20 text-xs">
+                              <%= role.name.capitalize %>
+                            </span>
+                          <% end %>
+                        <% else %>
+                          <span class="px-3 py-1 rounded-full bg-gray-400/10 text-gray-300 border border-gray-400/20 text-xs">
+                            No role
                           </span>
                         <% end %>
-                      <% else %>
-                        <span class="px-3 py-1 rounded-full bg-gray-400/10 text-gray-300 border border-gray-400/20 text-xs">
-                          No role
-                        </span>
-                      <% end %>
-                    </div>
-                  </td>
-                  <td class="px-6 py-5 text-gray-400">
-                    <%= member.created_at.strftime("%d %b %Y") %>
-                  </td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        </div>
-      <% else %>
-        <div class="p-10 text-center">
-          <p class="text-gray-300 font-medium">No members assigned yet.</p>
-          <%= link_to "Add Members",
+                      </div>
+                    </td>
+                    <td class="px-6 py-5 text-gray-400">
+                      <%= member.created_at.strftime("%d %b %Y") %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <div class="p-10 text-center">
+            <p class="text-gray-300 font-medium">No members assigned yet.</p>
+            <%= link_to "Add Members",
               edit_project_path(@project),
               class: "inline-block mt-5 bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-3 rounded-xl font-semibold" %>
-        </div>
-      <% end %>
-    </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
     <div>
       <%= link_to "← Back to Projects",
           projects_path,

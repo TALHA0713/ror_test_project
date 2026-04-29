@@ -13,10 +13,8 @@
         <!-- Menu links only after login -->
         <% if logged_in? %>
           <div class="hidden sm:flex space-x-4">
-            <% if current_user.can_create_project? %>
-              <%= link_to "Projects", projects_path, class: "text-gray-300 hover:text-white px-3 py-2 rounded-md hover:bg-white/10" %>
-            <% end %>
-            <%# <%= link_to "Users", users_path, class: "text-white px-3 py-2 rounded-md hover:bg-white/10" %> %>
+            <%= link_to "Projects", projects_path, class: "text-gray-300 hover:text-white px-3 py-2 rounded-md hover:bg-white/10" %>
+            <%# <%= link_to "Users", users_path, class: "text-white px-3 py-2 rounded-md hover:bg-white/10" %>
             <%= link_to "Profile", user_path(current_user), class: "text-gray-300 hover:text-white px-3 py-2 rounded-md hover:bg-white/10" %>
           </div>
         <% end %>

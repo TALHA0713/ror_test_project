@@ -30,4 +30,17 @@ class User < ApplicationRecord
   validates :email, presence: true, uniqueness: true
   validates :password, presence: true, length: { minimum: 6 }, confirmation: true, on: :create
   validates :password, length: { minimum: 6 }, allow_blank: true, confirmation: true, on: :update
+
+  def active_project_member_for(project)
+    project_members.find_by(project: project, is_active: true)
+  end
+
+  def role_names_for(project)
+    member = active_project_member_for(project)
+    member ? member.roles.pluck(:name) : []
+  end
+
+  def manager_for_project?(project)
+    role_names_for(project).include?("manager")
+  end
 end

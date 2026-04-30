@@ -1,0 +1,118 @@
+<section class="min-h-[calc(100vh-132px)] bg-gradient-to-br from-gray-950 via-gray-900 to-indigo-950 px-4 py-10">
+  <div class="max-w-7xl mx-auto space-y-6">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-white">Tickets Dashboard</h1>
+        <p class="mt-2 text-gray-400">
+          Managers see all project tickets. Developers and QA see their assigned tickets.
+        </p>
+      </div>
+      <%# user can see this button if he is associated with any project %>
+      <% if @ticket_projects.any? %>
+        <%= link_to "Create Ticket",
+            new_ticket_path,
+            class: "bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-3 rounded-xl font-semibold text-center" %>
+      <% end %>
+    </div>
+
+    <% if @ticket_projects.any? %>
+      <div class="rounded-2xl border border-white/10 bg-white/10 p-6 backdrop-blur-xl shadow-2xl">
+        <%= form_with url: tickets_path, method: :get, class: "grid gap-4 md:grid-cols-4" do |form| %>
+          <div>
+            <%= form.label :status, class: "block text-sm font-medium text-gray-200 mb-2" %>
+            <%= form.select :status,
+                  options_for_select([["All Statuses", ""]] + Ticket.statuses.keys.map { |status| [status.humanize, status] }, @status_filter),
+                  {},
+                  class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400" %>
+          </div>
+
+          <div>
+            <%= form.label :priority, class: "block text-sm font-medium text-gray-200 mb-2" %>
+            <%= form.select :priority,
+                  options_for_select([["All Priorities", ""]] + Ticket.priorities.keys.map { |priority| [priority.humanize, priority] }, @priority_filter),
+                  {},
+                  class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400" %>
+          </div>
+
+          <div class="flex items-end">
+            <%= form.submit "Apply Filters",
+                  class: "w-full cursor-pointer rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-3 font-semibold" %>
+          </div>
+
+          <div class="flex items-end">
+            <%= link_to "Clear",
+                tickets_path,
+                class: "w-full rounded-lg bg-white/10 hover:bg-white/20 text-white px-4 py-3 font-semibold text-center border border-white/10" %>
+          </div>
+        <% end %>
+      </div>
+
+      <% if @tickets.any? %>
+        <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/10 backdrop-blur-xl shadow-2xl">
+          <table class="min-w-full divide-y divide-white/10">
+            <thead class="bg-white/10">
+              <tr>
+                <th class="px-6 py-4 text-left text-xs font-semibold uppercase text-gray-300">Ticket</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold uppercase text-gray-300">Project</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold uppercase text-gray-300">Assignee</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold uppercase text-gray-300">Status</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold uppercase text-gray-300">Priority</th>
+                <th class="px-6 py-4 text-right text-xs font-semibold uppercase text-gray-300">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/10">
+              <% @tickets.each do |ticket| %>
+                <tr class="hover:bg-white/5 transition">
+                  <td class="px-6 py-5">
+                    <p class="font-semibold text-white">
+                      <%= ticket.ticket_label %> - <%= ticket.title %>
+                    </p>
+                    <p class="mt-1 text-sm text-gray-400">
+                      <%= ticket.ticket_type.humanize %>
+                    </p>
+                  </td>
+                  <td class="px-6 py-5 text-gray-300"><%= ticket.project.name %></td>
+                  <td class="px-6 py-5 text-gray-300"><%= ticket.assigned_to_user&.name %></td>
+                  <td class="px-6 py-5">
+                    <span class="inline-flex rounded-full px-3 py-1 text-xs font-medium <%= ticket_status_classes(ticket.status) %>">
+                      <%= ticket.status.humanize %>
+                    </span>
+                  </td>
+                  <td class="px-6 py-5">
+                    <span class="inline-flex rounded-full px-3 py-1 text-xs font-medium <%= ticket_priority_classes(ticket.priority) %>">
+                      <%= ticket.priority.humanize %>
+                    </span>
+                  </td>
+                  <td class="px-6 py-5 text-right">
+                    <div class="flex justify-end gap-2">
+                      <%= link_to "View",
+                          ticket_path(ticket),
+                          class: "px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm" %>
+                      <% if can_edit_ticket?(ticket) %>
+                        <%= link_to "Edit",
+                            edit_ticket_path(ticket),
+                            class: "px-3 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white text-sm" %>
+                      <% end %>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="rounded-2xl border border-white/10 bg-white/10 p-10 text-center backdrop-blur-xl">
+          <h2 class="text-2xl font-bold text-white">No tickets found</h2>
+          <p class="mt-2 text-gray-400">Try changing the filters or create a new ticket.</p>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="rounded-2xl border border-white/10 bg-white/10 p-10 text-center backdrop-blur-xl">
+        <h2 class="text-2xl font-bold text-white">You do not have any associated project</h2>
+        <p class="mt-2 text-gray-400">
+          Ask your manager to add you to a project before working with tickets.
+        </p>
+      </div>
+    <% end %>
+  </div>
+</section>

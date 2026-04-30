@@ -12,15 +12,9 @@ Rails.application.routes.draw do
       delete "remove_member/:user_id", to: "projects#remove_member", as: :remove_member
     end
     resources :project_members
-    resources :tickets
   end
 
-  resources :tickets do
-    resources :comments
-    resources :attachments
-  end
-
-  resources :comments do
-    resources :attachments
+  resources :tickets, only: [ :index, :new, :create, :show, :edit, :update ] do
+    resources :comments, only: :create
   end
 end

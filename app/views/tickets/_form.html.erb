@@ -1,0 +1,135 @@
+<% if ticket.errors.any? %>
+  <div class="bg-red-500/10 border border-red-400/30 text-red-200 p-4 rounded-lg mb-5 text-sm">
+    <ul class="list-disc list-inside space-y-1">
+      <% ticket.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
+
+<%= form_with model: ticket, html: { multipart: true }, class: "space-y-6" do |form| %>
+  <% if ticket.new_record? %>
+    <div>
+      <%= form.label :project_id, "Project", class: "block text-sm font-medium text-gray-200 mb-2" %>
+      <%= form.select :project_id,
+            options_from_collection_for_select(@ticket_projects, :id, :name, ticket.project_id),
+            { prompt: "Select project" },
+            class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400",
+            data: { project_select: true } %>
+    </div>
+  <% else %>
+    <div class="rounded-xl border border-white/10 bg-white/10 p-4">
+      <p class="text-sm text-gray-400">Project</p>
+      <p class="mt-1 font-semibold text-white"><%= ticket.project.name %></p>
+    </div>
+  <% end %>
+
+  <div class="grid gap-6 md:grid-cols-2">
+    <div>
+      <%= form.label :title, class: "block text-sm font-medium text-gray-200 mb-2" %>
+      <%= form.text_field :title,
+            placeholder: "Enter ticket title",
+            class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white placeholder-gray-400 outline-none focus:border-indigo-400" %>
+    </div>
+
+    <div>
+      <%= form.label :assigned_to_user_id, "Assign To", class: "block text-sm font-medium text-gray-200 mb-2" %>
+      <%= form.select :assigned_to_user_id,
+            options_for_select((@assignable_users || []).map { |user| [user.name, user.id] }, ticket.assigned_to_user_id),
+            { prompt: "Select user" },
+            class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400",
+            data: { assignee_select: true } %>
+    </div>
+  </div>
+
+  <div>
+    <%= form.label :description, class: "block text-sm font-medium text-gray-200 mb-2" %>
+    <%= form.text_area :description,
+          rows: 5,
+          placeholder: "Enter ticket description",
+          class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white placeholder-gray-400 outline-none focus:border-indigo-400" %>
+  </div>
+
+  <div class="grid gap-6 md:grid-cols-4">
+    <div>
+      <%= form.label :ticket_type, "Type", class: "block text-sm font-medium text-gray-200 mb-2" %>
+      <%= form.select :ticket_type,
+            options_for_select(Ticket.ticket_types.keys.map { |type| [type.humanize, type] }, ticket.ticket_type),
+            { prompt: "Select type" },
+            class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400" %>
+    </div>
+
+    <div>
+      <%= form.label :status, class: "block text-sm font-medium text-gray-200 mb-2" %>
+      <%= form.select :status,
+            options_for_select(Ticket.statuses.keys.map { |status| [status.humanize, status] }, ticket.status || "open"),
+            {},
+            class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400" %>
+    </div>
+
+    <div>
+      <%= form.label :priority, class: "block text-sm font-medium text-gray-200 mb-2" %>
+      <%= form.select :priority,
+            options_for_select(Ticket.priorities.keys.map { |priority| [priority.humanize, priority] }, ticket.priority || "medium"),
+            {},
+            class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400" %>
+    </div>
+
+    <div>
+      <%= form.label :due_date, class: "block text-sm font-medium text-gray-200 mb-2" %>
+      <%= form.date_field :due_date,
+            class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400" %>
+    </div>
+  </div>
+
+  <div>
+    <%= form.label :files, "Attachments", class: "block text-sm font-medium text-gray-200 mb-2" %>
+    <%= form.file_field :files,
+          multiple: true,
+          class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-gray-200" %>
+    <p class="mt-2 text-sm text-gray-400">You can attach one or more files while creating or updating a ticket.</p>
+  </div>
+
+  <div class="flex flex-col sm:flex-row gap-3 pt-4">
+    <%= form.submit ticket.new_record? ? "Create Ticket" : "Update Ticket",
+          class: "bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold cursor-pointer transition shadow-lg shadow-indigo-500/20" %>
+    <%= link_to "Back",
+          tickets_path,
+          class: "text-center bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl font-semibold border border-white/10 transition" %>
+  </div>
+<% end %>
+
+<% if @project_users_by_id.present? %>
+  <script>
+    document.addEventListener("turbo:load", setupTicketAssigneeSelect);
+    // document.addEventListener("DOMContentLoaded", setupTicketAssigneeSelect);
+
+    function setupTicketAssigneeSelect() {
+      const projectSelect = document.querySelector("[data-project-select='true']");
+      const assigneeSelect = document.querySelector("[data-assignee-select='true']");
+      if (!projectSelect || !assigneeSelect) return;
+
+      const projectUsers = <%= raw json_escape(@project_users_by_id.to_json) %>;
+      const selectedAssignee = "<%= ticket.assigned_to_user_id %>";
+
+      function fillAssignees() {
+        const users = projectUsers[projectSelect.value] || [];
+
+        assigneeSelect.innerHTML = "";
+        assigneeSelect.append(new Option("Select user", ""));
+
+        users.forEach(function(userData) {
+          const option = new Option(userData[0], userData[1]);
+          if (String(userData[1]) === selectedAssignee) {
+            option.selected = true;
+          }
+          assigneeSelect.append(option);
+        });
+      }
+
+      projectSelect.addEventListener("change", fillAssignees);
+      fillAssignees();
+    }
+  </script>
+<% end %>

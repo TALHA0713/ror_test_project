@@ -11,6 +11,9 @@ class Ticket < ApplicationRecord
   has_many :comments, dependent: :destroy
   has_many :attachments, dependent: :destroy
 
+  before_validation :assign_ticket_no, on: :create
+  before_save :set_closed_at_value
+
   enum :ticket_type, {
     bug: "bug",
     feature: "feature",
@@ -32,8 +35,37 @@ class Ticket < ApplicationRecord
   }
 
   validates :title, presence: true
+  validates :project_id, presence: true
   validates :ticket_no, presence: true, uniqueness: { scope: :project_id }
   validates :ticket_type, presence: true
   validates :status, presence: true
   validates :priority, presence: true
+  validates :assigned_to_user_id, presence: true
+
+  validate :assigned_user_must_belong_to_project
+
+  scope :ordered, -> { includes(:project, :created_by_user, :assigned_to_user).order(updated_at: :desc) }
+
+  def ticket_label
+    "##{ticket_no}"
+  end
+
+  private
+
+  def assign_ticket_no
+    return if ticket_no.present? || project.blank?
+
+    self.ticket_no = project.next_ticket_no
+  end
+
+  def set_closed_at_value
+    self.closed_at = closed? ? (closed_at || Time.current) : nil
+  end
+
+  def assigned_user_must_belong_to_project
+    return if assigned_to_user_id.blank? || project.blank?
+    return if project.active_members.where(user_id: assigned_to_user_id).exists?
+
+    errors.add(:assigned_to_user_id, "must belong to the selected project")
+  end
 end

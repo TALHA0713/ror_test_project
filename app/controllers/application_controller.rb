@@ -1,4 +1,5 @@
 class ApplicationController < ActionController::Base
+  rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
   allow_browser versions: :modern
   stale_when_importmap_changes
   helper_method :current_user, :logged_in?, :manager_for_project?, :can_access_ticket?, :can_edit_ticket?
@@ -40,11 +41,15 @@ class ApplicationController < ActionController::Base
     # if user is not active member of that ticket’s project, then cannot access
     return false unless active_project_member_for(ticket.project)
     # if user is manager of this project or current user is assinged to this ticket, then can access
-    manager_for_project?(ticket.project) || ticket.assigned_to_user_id == current_user.id
+    manager_for_project?(ticket.project) || ticket.assigned_to_user_id == current_user.id || ticket.created_by_user_id == current_user.id
   end
 
   def can_edit_ticket?(ticket)
     can_access_ticket?(ticket)
+  end
+
+  def render_not_found
+    render "errors/not_found", status: :not_found
   end
 end
 

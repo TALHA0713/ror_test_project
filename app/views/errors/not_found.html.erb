@@ -1,0 +1,20 @@
+<section class="min-h-[calc(100vh-132px)] bg-gradient-to-br from-gray-950 via-gray-900 to-indigo-950 px-4 py-10 flex items-center justify-center">
+  <div class="max-w-xl w-full rounded-2xl border border-white/10 bg-white/10 backdrop-blur-xl shadow-2xl p-10 text-center">
+    <div class="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-2xl bg-indigo-500/20 border border-indigo-400/30">
+      <span class="text-4xl font-bold text-indigo-300">404</span>
+    </div>
+    <h1 class="text-4xl font-bold text-white">Page not found</h1>
+    <p class="mt-4 text-gray-400 leading-relaxed">
+      The page you opened does not exist, or you do not have access to it.
+    </p>
+    <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+      <%= link_to "Tickets Dashboard",
+          tickets_path,
+          class: "rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 font-semibold text-center" %>
+      <%= link_to "Projects",
+          projects_path,
+          class: "rounded-xl bg-white/10 hover:bg-white/20 text-white px-6 py-3 font-semibold text-center border border-white/10" %>
+    </div>
+    <p class="mt-6 text-sm text-gray-500">Error Code: 404</p>
+  </div>
+</section>

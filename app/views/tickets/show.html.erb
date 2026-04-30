@@ -191,7 +191,7 @@
     </div>
   </div>
 </section>
-<script>
+<%# <script>
   document.addEventListener("turbo:load", setupTicketShowPage);
 
   function setupTicketShowPage() {
@@ -240,16 +240,34 @@
     if (addButton.dataset.initialized === "true") return;
     addButton.dataset.initialized = "true";
 
+    let selectedFiles = [];
+
     addButton.addEventListener("click", function() {
       fileInput.click();
     });
 
-    fileInput.addEventListener("change", renderFiles);
+    fileInput.addEventListener("change", function() {
+      selectedFiles = selectedFiles.concat(Array.from(fileInput.files));
+      updateFileInput();
+      renderFiles();
+    });
+
+
+      function updateFileInput() {
+        const dataTransfer = new DataTransfer();
+      
+        selectedFiles.forEach(function(file) {
+          dataTransfer.items.add(file);
+        });
+
+        fileInput.files = dataTransfer.files;
+      }
+
 
     function renderFiles() {
       filesList.innerHTML = "";
 
-      Array.from(fileInput.files).forEach(function(file, index) {
+      selectedFiles.forEach(function(file, index) {
         const item = document.createElement("div");
         item.className = "inline-flex items-center gap-2 rounded-lg bg-white/10 border border-white/10 text-white px-3 py-2 text-sm";
 
@@ -263,7 +281,9 @@
         removeBtn.textContent = "×";
 
         removeBtn.addEventListener("click", function() {
-          removeFile(index);
+          selectedFiles.splice(index, 1);
+          updateFileInput();
+          renderFiles();
         });
 
         item.appendChild(name);
@@ -271,18 +291,5 @@
         filesList.appendChild(item);
       });
     }
-
-    function removeFile(index) {
-      const dataTransfer = new DataTransfer();
-
-      Array.from(fileInput.files).forEach(function(file, i) {
-        if (i !== index) {
-          dataTransfer.items.add(file);
-        }
-      });
-
-      fileInput.files = dataTransfer.files;
-      renderFiles();
-    }
   }
-</script>
+</script> %>

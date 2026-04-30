@@ -7,6 +7,8 @@ class TicketsController < ApplicationController
   def index
     @status_filter = params[:status].presence
     @priority_filter = params[:priority].presence
+    @project_filter = params[:project_id].presence
+    @ticket_scope_filter = params[:ticket_scope].presence
     @tickets = filtered_tickets
   end
 
@@ -45,7 +47,8 @@ class TicketsController < ApplicationController
     end
 
     if @ticket.save
-      Attachment.save_files_for(@ticket, params[:ticket][:files], current_user)
+      # Attachment.save_files_for(@ticket, params[:ticket][:files], current_user)
+      Attachment.save_files_for(@ticket, params.dig(:ticket, :files), current_user)
       redirect_to ticket_path(@ticket), notice: "Ticket created successfully."
     else
       render :new, status: :unprocessable_entity
@@ -62,7 +65,8 @@ class TicketsController < ApplicationController
     return if performed?
 
     if @ticket.update(update_ticket_params)
-      Attachment.save_files_for(@ticket, params[:ticket][:files], current_user)
+      # Attachment.save_files_for(@ticket, params[:ticket][:files], current_user)
+      Attachment.save_files_for(@ticket, params.dig(:ticket, :files), current_user)
       redirect_to ticket_path(@ticket), notice: "Ticket updated successfully."
     else
       render :edit, status: :unprocessable_entity
@@ -103,10 +107,19 @@ class TicketsController < ApplicationController
     tickets = accessible_tickets
     tickets = tickets.where(status: @status_filter) if @status_filter.present?
     tickets = tickets.where(priority: @priority_filter) if @priority_filter.present?
+    tickets = tickets.where(project_id: @project_filter) if @project_filter.present?
+
+    if @ticket_scope_filter == "assigned_to_me"
+      tickets = tickets.where(assigned_to_user_id: current_user.id)
+    elsif @ticket_scope_filter == "created_by_me"
+      tickets = tickets.where(created_by_user_id: current_user.id)
+    end
+
     tickets.ordered
   end
 
   def accessible_tickets
+    allowed_project_ids = @ticket_projects.map(&:id)
     # Get all project IDs where this current user is a manager
     managed_project_ids = current_user.project_members
                                       .joins(:roles)
@@ -114,14 +127,18 @@ class TicketsController < ApplicationController
                                       .distinct
                                       .pluck(:project_id)
 
-    assigned_tickets = Ticket.where(project_id: @ticket_projects.map(&:id), assigned_to_user_id: current_user.id)
+    assigned_tickets = Ticket.where(project_id: allowed_project_ids, assigned_to_user_id: current_user.id)
+    created_tickets = Ticket.where(
+      project_id: allowed_project_ids,
+      created_by_user_id: current_user.id
+    )
 
     if managed_project_ids.any?
       # if user role is manager of any project, show all tickets of those projects + assigned tickets
-      Ticket.where(project_id: managed_project_ids).or(assigned_tickets).distinct
+      Ticket.where(project_id: managed_project_ids).or(assigned_tickets).or(created_tickets).distinct
     else
       # return those tickets which is assigned to current user in any of their projects
-      assigned_tickets
+      assigned_tickets.or(created_tickets).distinct
     end
   end
 

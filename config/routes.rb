@@ -17,4 +17,5 @@ Rails.application.routes.draw do
   resources :tickets, only: [ :index, :new, :create, :show, :edit, :update ] do
     resources :comments, only: :create
   end
+  match "*path", to: "errors#not_found", via: :all
 end

@@ -14,10 +14,16 @@
             class: "bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-3 rounded-xl font-semibold text-center" %>
       <% end %>
     </div>
-
     <% if @ticket_projects.any? %>
       <div class="rounded-2xl border border-white/10 bg-white/10 p-6 backdrop-blur-xl shadow-2xl">
-        <%= form_with url: tickets_path, method: :get, class: "grid gap-4 md:grid-cols-4" do |form| %>
+        <%= form_with url: tickets_path, method: :get, class: "grid gap-6 md:grid-cols-6" do |form| %>
+          <div>
+            <%= form.label :project_id, class: "block text-sm font-medium text-gray-200 mb-2" %>
+            <%= form.select :project_id,
+                  options_for_select([["All Projects", ""]] + @ticket_projects.map { |p| [p.name, p.id] }, @project_filter),
+                  {},
+                  class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400" %>
+          </div>
           <div>
             <%= form.label :status, class: "block text-sm font-medium text-gray-200 mb-2" %>
             <%= form.select :status,
@@ -25,7 +31,6 @@
                   {},
                   class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400" %>
           </div>
-
           <div>
             <%= form.label :priority, class: "block text-sm font-medium text-gray-200 mb-2" %>
             <%= form.select :priority,
@@ -33,12 +38,24 @@
                   {},
                   class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400" %>
           </div>
-
+          <div>
+            <%= form.label :ticket_scope, "Ticket Type", class: "block text-sm font-medium text-gray-200 mb-2" %>
+            <%= form.select :ticket_scope,
+              options_for_select(
+                [
+                  ["Ticket Scope", ""],
+                  ["Assigned to me", "assigned_to_me"],
+                  ["Created by me", "created_by_me"]
+                ],
+                @ticket_scope_filter
+              ),
+              {},
+        class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400" %>
+          </div>
           <div class="flex items-end">
             <%= form.submit "Apply Filters",
                   class: "w-full cursor-pointer rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-3 font-semibold" %>
           </div>
-
           <div class="flex items-end">
             <%= link_to "Clear",
                 tickets_path,
@@ -46,7 +63,6 @@
           </div>
         <% end %>
       </div>
-
       <% if @tickets.any? %>
         <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/10 backdrop-blur-xl shadow-2xl">
           <table class="min-w-full divide-y divide-white/10">
@@ -57,6 +73,7 @@
                 <th class="px-6 py-4 text-left text-xs font-semibold uppercase text-gray-300">Assignee</th>
                 <th class="px-6 py-4 text-left text-xs font-semibold uppercase text-gray-300">Status</th>
                 <th class="px-6 py-4 text-left text-xs font-semibold uppercase text-gray-300">Priority</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold uppercase text-gray-300">Created By</th>
                 <th class="px-6 py-4 text-right text-xs font-semibold uppercase text-gray-300">Actions</th>
               </tr>
             </thead>
@@ -83,6 +100,7 @@
                       <%= ticket.priority.humanize %>
                     </span>
                   </td>
+                  <td class="px-6 py-5 text-gray-300"><%= ticket.created_by_user&.name %></td>
                   <td class="px-6 py-5 text-right">
                     <div class="flex justify-end gap-2">
                       <%= link_to "View",

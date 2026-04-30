@@ -6,12 +6,12 @@ class ProjectsController < ApplicationController
   def index
     @projects =
       if current_user.can_create_project?
-        current_user.created_projects.includes(project_members: :user)
+        current_user.created_projects.includes(:tickets, project_members: :user)
       else
         Project
           .joins(:project_members)
           .where(project_members: { user_id: current_user.id, is_active: true })
-          .includes(project_members: :user)
+          .includes(:tickets, project_members: :user)
           .distinct
       end
   end
@@ -158,7 +158,7 @@ class ProjectsController < ApplicationController
   def sync_roles_for_member(member, selected_roles, keep_manager:)
     # Remove developer / QA roles first
     member.project_member_roles
-          .joins(:role) 
+          .joins(:role)
           .where(roles: { name: allowed_member_roles })
           .destroy_all
 

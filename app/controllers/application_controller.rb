@@ -1,6 +1,8 @@
 class ApplicationController < ActionController::Base
+  # find no found error from database
   rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
   allow_browser versions: :modern
+  # Refresh cache when JS imports change
   stale_when_importmap_changes
   helper_method :current_user, :logged_in?, :manager_for_project?, :can_access_ticket?, :can_edit_ticket?
 
@@ -25,16 +27,8 @@ class ApplicationController < ActionController::Base
     current_user&.active_project_member_for(project)
   end
 
-  def role_names_for(project)
-    current_user ? current_user.role_names_for(project) : []
-  end
-
   def manager_for_project?(project)
-    current_user&.manager_for_project?(project)
-  end
-
-  def can_work_on_project?(project)
-    role_names_for(project).any?
+    current_user&.manager? && active_project_member_for(project).present?
   end
 
   def can_access_ticket?(ticket)

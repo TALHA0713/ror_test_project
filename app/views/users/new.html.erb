@@ -43,12 +43,12 @@
                 placeholder: "••••••••",
                 class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white placeholder-gray-400 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/30" %>
         </div>
-        <div class="flex items-center gap-3">
-          <%= form.check_box :can_create_project,
-                class: "h-4 w-4 rounded border-white/10 bg-white/10 text-indigo-500 focus:ring-indigo-400" %>
-          <%= form.label :can_create_project,
-                "Can create project?",
-                class: "text-sm font-medium text-gray-200" %>
+        <div>
+          <%= form.label :role, class: "block text-sm font-medium text-gray-200 mb-2" %>
+          <%= form.select :role,
+                options_for_select([["Developer", "developer"], ["QA", "qa"], ["Manager", "manager"]], @user.role),
+                { prompt: "Select a role" },
+                class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400" %>
         </div>
         <%= form.submit "Create Account",
               class: "w-full rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white py-3 font-semibold shadow-lg shadow-indigo-500/20 cursor-pointer transition" %>

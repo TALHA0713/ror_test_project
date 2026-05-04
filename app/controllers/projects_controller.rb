@@ -1,11 +1,12 @@
 class ProjectsController < ApplicationController
   before_action :require_login
-  before_action :require_project_creator, only: [ :new, :create, :edit, :update, :destroy, :remove_member ]
+  before_action :require_manager, only: [ :new, :create, :edit, :update, :destroy, :remove_member ]
   before_action :set_project, only: [ :show, :edit, :update, :destroy, :remove_member ]
 
   def index
     @projects =
-      if current_user.can_create_project?
+      if current_user.manager?
+        # includes: “Load related data in advance to avoid extra database queries.”
         current_user.created_projects.includes(:tickets, project_members: :user)
       else
         Project
@@ -17,7 +18,7 @@ class ProjectsController < ApplicationController
   end
 
   def show
-    @project_members = @project.project_members.includes(:user, :roles)
+    @project_members = @project.project_members.includes(:user)
   end
 
   def new
@@ -29,7 +30,7 @@ class ProjectsController < ApplicationController
     @project = current_user.created_projects.build(project_params)
 
     if @project.save
-      create_creator_as_manager
+      ensure_creator_is_member
       sync_project_members
 
       redirect_to project_path(@project), notice: "Project created successfully."
@@ -41,18 +42,18 @@ class ProjectsController < ApplicationController
 
   def edit
     @users = User.where.not(id: current_user.id)
-    @project_members = @project.project_members.includes(:user, :roles)
+    @project_members = @project.project_members.includes(:user)
   end
 
   def update
     if @project.update(project_params)
-      create_creator_as_manager
+      ensure_creator_is_member
       sync_project_members
 
       redirect_to @project, notice: "Project updated successfully."
     else
       @users = User.where.not(id: current_user.id)
-      @project_members = @project.project_members.includes(:user, :roles)
+      @project_members = @project.project_members.includes(:user)
       render :edit, status: :unprocessable_entity
     end
   end
@@ -65,7 +66,7 @@ class ProjectsController < ApplicationController
   def remove_member
     member = @project.project_members.find_by(user_id: params[:user_id])
 
-    if member&.user == current_user
+    if member&.user_id == @project.created_by_user_id
       return redirect_to edit_project_path(@project), alert: "Project creator cannot be removed."
     end
 
@@ -81,9 +82,11 @@ class ProjectsController < ApplicationController
 
   def set_project
     @project =
-      if current_user.can_create_project?
+      if current_user.manager?
+        # find project only from projects created by current user, to prevent unauthorized access
         current_user.created_projects.find(params[:id])
       else
+        # find only thoese projects where user is assigned as active member, to prevent unauthorized access
         Project
           .joins(:project_members)
           .where(project_members: { user_id: current_user.id, is_active: true })
@@ -92,9 +95,9 @@ class ProjectsController < ApplicationController
       end
   end
 
-  def require_project_creator
-    unless current_user.can_create_project?
-      redirect_to root_path, alert: "You are not allowed to manage projects."
+  def require_manager
+    unless current_user.manager?
+      redirect_to root_path, alert: "Only managers can manage projects."
     end
   end
 
@@ -102,41 +105,12 @@ class ProjectsController < ApplicationController
     params.require(:project).permit(:name, :description)
   end
 
-  def allowed_member_roles
-    %w[developer qa]
-  end
-
-  def manager_role
-    Role.find_by!(name: "manager")
-  end
-
-  def role_by_name(name)
-    Role.find_by!(name: name)
-  end
-
   def selected_user_ids
     Array(params[:project_user_ids]).reject(&:blank?)
   end
 
-  def user_roles_params
-    params[:user_roles] || {}
-  end
-
-  def creator_role_names
-    Array(params[:creator_roles]).reject(&:blank?) & allowed_member_roles
-  end
-
-  def create_creator_as_manager
-    creator_member = @project.project_members.find_or_create_by!(user: current_user)
-
-    # Creator is always manager
-    ProjectMemberRole.find_or_create_by!(
-      project_member: creator_member,
-      role: manager_role
-    )
-
-    # Creator can also be developer / QA
-    sync_roles_for_member(creator_member, creator_role_names, keep_manager: true)
+  def ensure_creator_is_member
+    @project.project_members.find_or_create_by!(user: current_user)
   end
 
   def sync_project_members
@@ -146,35 +120,13 @@ class ProjectsController < ApplicationController
             .where.not(user_id: current_user.id)
             .destroy_all
 
-    selected_user_ids.each do |user_id|
-      member = @project.project_members.find_or_create_by!(user_id: user_id)
+    valid_user_ids = User
+      .where(id: selected_user_ids)
+      .where.not(role: "manager")
+      .pluck(:id)
 
-      selected_roles = Array(user_roles_params[user_id]).reject(&:blank?) & allowed_member_roles
-
-      sync_roles_for_member(member, selected_roles, keep_manager: false)
-    end
-  end
-
-  def sync_roles_for_member(member, selected_roles, keep_manager:)
-    # Remove developer / QA roles first
-    member.project_member_roles
-          .joins(:role)
-          .where(roles: { name: allowed_member_roles })
-          .destroy_all
-
-    # Remove manager role from everyone except creator
-    unless keep_manager
-      member.project_member_roles
-            .joins(:role)
-            .where(roles: { name: "manager" })
-            .destroy_all
-    end
-
-    selected_roles.each do |role_name|
-      ProjectMemberRole.find_or_create_by!(
-        project_member: member,
-        role: role_by_name(role_name)
-      )
+    valid_user_ids.each do |user_id|
+      @project.project_members.find_or_create_by!(user_id: user_id)
     end
   end
 end

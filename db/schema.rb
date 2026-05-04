@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_28_143346) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_30_000003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,16 +40,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_28_143346) do
     t.index ["user_id"], name: "index_comments_on_user_id"
   end
 
-  create_table "project_member_roles", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.bigint "project_member_id", null: false
-    t.bigint "role_id", null: false
-    t.datetime "updated_at", null: false
-    t.index ["project_member_id", "role_id"], name: "project_member_roles_table", unique: true
-    t.index ["project_member_id"], name: "index_project_member_roles_on_project_member_id"
-    t.index ["role_id"], name: "index_project_member_roles_on_role_id"
-  end
-
   create_table "project_members", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.boolean "is_active", default: true, null: false
@@ -69,14 +59,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_28_143346) do
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.index ["created_by_user_id"], name: "index_projects_on_created_by_user_id"
-  end
-
-  create_table "roles", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "name", null: false
-    t.datetime "updated_at", null: false
-    t.index ["name"], name: "index_roles_on_name", unique: true
-    t.check_constraint "name::text = ANY (ARRAY['manager'::character varying, 'qa'::character varying, 'developer'::character varying]::text[])", name: "roles"
   end
 
   create_table "tickets", force: :cascade do |t|
@@ -103,14 +85,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_28_143346) do
   end
 
   create_table "users", force: :cascade do |t|
-    t.boolean "can_create_project", default: false, null: false
     t.datetime "created_at", null: false
     t.string "email", null: false
     t.boolean "is_active", default: true, null: false
     t.string "name", null: false
     t.string "password_digest", null: false
+    t.string "role", null: false
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.check_constraint "role::text = ANY (ARRAY['manager'::character varying::text, 'developer'::character varying::text, 'qa'::character varying::text])", name: "user_role"
   end
 
   add_foreign_key "attachments", "comments"
@@ -118,8 +101,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_28_143346) do
   add_foreign_key "attachments", "users", column: "uploaded_by_user_id"
   add_foreign_key "comments", "tickets"
   add_foreign_key "comments", "users"
-  add_foreign_key "project_member_roles", "project_members"
-  add_foreign_key "project_member_roles", "roles"
   add_foreign_key "project_members", "projects"
   add_foreign_key "project_members", "users"
   add_foreign_key "projects", "users", column: "created_by_user_id"

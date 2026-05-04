@@ -13,17 +13,17 @@
     <div class="flex items-center justify-between mb-8">
       <div>
         <h1 class="text-3xl font-bold text-white">
-          <%= current_user.can_create_project? ? "My Projects" : "Assigned Projects" %>
+          <%= current_user.manager? ? "My Projects" : "Assigned Projects" %>
         </h1>
         <p class="text-gray-400 mt-2">
-          <% if current_user.can_create_project? %>
+          <% if current_user.manager? %>
             Projects created by you.
           <% else %>
             Projects where you are added as a member.
           <% end %>
         </p>
       </div>
-      <% if current_user.can_create_project? %>
+      <% if current_user.manager? %>
         <%= link_to "Create Project",
             new_project_path,
             data: { turbo: false },
@@ -65,7 +65,7 @@
                     <%= link_to "View",
                         project_path(project),
                         class: "px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm" %>
-                    <% if current_user.can_create_project? && project.created_by_user_id == current_user.id %>
+                    <% if current_user.manager? && project.created_by_user_id == current_user.id %>
                       <%= link_to "Edit",
                           edit_project_path(project),
                           class: "px-3 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white text-sm" %>
@@ -84,13 +84,14 @@
       </div>
     <% else %>
       <div class="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-xl p-10 text-center">
-        <% if current_user.can_create_project? %>
+        <% if current_user.manager? %>
           <h2 class="text-2xl font-bold text-white">No project created yet</h2>
           <p class="text-gray-400 mt-2">You have not created any project. Please create one.</p>
           <%= link_to "Create Project",
               new_project_path,
               data: { turbo: false },
               class: "inline-block mt-6 bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold" %>
+
         <% else %>
           <h2 class="text-2xl font-bold text-white">Currently you are not associated with any project</h2>
           <p class="text-gray-400 mt-2">Please check with your project manager.</p>

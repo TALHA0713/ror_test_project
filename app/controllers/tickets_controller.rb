@@ -82,26 +82,26 @@ class TicketsController < ApplicationController
   def set_ticket_projects
     @ticket_projects =
       Project
-        .joins(project_members: :project_member_roles)
+        .joins(:project_members)
         .where(project_members: { user_id: current_user.id, is_active: true })
         .includes(:users)
         .order(:name)
         .distinct
   end
 
-  def set_form_data
-    # show users of that ticket’s project
-    if action_name.in?([ "edit", "update" ]) && @ticket
-      @assignable_users = @ticket.project.assignable_users
-    else
-      # show users of all projects (grouped) for dropdown selection
-      @project_users_by_id = {}
-      @ticket_projects.each do |project|
-        @project_users_by_id[project.id] =
-          project.assignable_users.map { |user| [ user.name, user.id ] }
+    def set_form_data
+      # show users of that ticket’s project
+      if action_name.in?([ "edit", "update" ]) && @ticket
+        @assignable_users = @ticket.project.assignable_users
+      else
+        # show users of all projects (grouped) for dropdown selection
+        @project_users_by_id = {}
+        @ticket_projects.each do |project|
+          @project_users_by_id[project.id] =
+            project.assignable_users.map { |user| [ user.name, user.id ] }
+        end
       end
     end
-  end
 
   def filtered_tickets
     tickets = accessible_tickets
@@ -120,24 +120,12 @@ class TicketsController < ApplicationController
 
   def accessible_tickets
     allowed_project_ids = @ticket_projects.map(&:id)
-    # Get all project IDs where this current user is a manager
-    managed_project_ids = current_user.project_members
-                                      .joins(:roles)
-                                      .where(is_active: true, roles: { name: "manager" })
-                                      .distinct
-                                      .pluck(:project_id)
-
     assigned_tickets = Ticket.where(project_id: allowed_project_ids, assigned_to_user_id: current_user.id)
-    created_tickets = Ticket.where(
-      project_id: allowed_project_ids,
-      created_by_user_id: current_user.id
-    )
+    created_tickets  = Ticket.where(project_id: allowed_project_ids, created_by_user_id: current_user.id)
 
-    if managed_project_ids.any?
-      # if user role is manager of any project, show all tickets of those projects + assigned tickets
-      Ticket.where(project_id: managed_project_ids).or(assigned_tickets).or(created_tickets).distinct
+    if current_user.manager?
+      Ticket.where(project_id: allowed_project_ids).or(assigned_tickets).or(created_tickets).distinct
     else
-      # return those tickets which is assigned to current user in any of their projects
       assigned_tickets.or(created_tickets).distinct
     end
   end

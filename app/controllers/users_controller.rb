@@ -1,21 +1,13 @@
 class UsersController < ApplicationController
   before_action :set_user, only: [ :show, :edit, :update, :destroy ]
 
-  # GET /users
-  # def index
-  #   @users = User.where.not(id: current_user.id)
-  # end
-
-  # GET /users/:id
   def show
   end
 
-  # GET /users/new
   def new
     @user = User.new
   end
 
-  # POST /users
   def create
     @user = User.new(user_params)
 
@@ -27,11 +19,9 @@ class UsersController < ApplicationController
     end
   end
 
-  # GET /users/:id/edit
   def edit
   end
 
-  # PATCH/PUT /users/:id
   def update
     if @user.update(user_params)
       redirect_to @user, notice: "User updated successfully."
@@ -40,7 +30,6 @@ class UsersController < ApplicationController
     end
   end
 
-  # DELETE /users/:id
   def destroy
     @user.destroy
     redirect_to users_path, notice: "User deleted successfully."
@@ -53,13 +42,13 @@ class UsersController < ApplicationController
   end
 
   def user_params
-  params.require(:user).permit(
-    :name,
-    :email,
-    :password,
-    :password_confirmation,
-    :is_active,
-    :can_create_project
-  )
+    params.require(:user).permit(
+      :name,
+      :email,
+      :password,
+      :password_confirmation,
+      :is_active,
+      :role
+    )
   end
 end

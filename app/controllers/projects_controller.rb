@@ -19,6 +19,17 @@ class ProjectsController < ApplicationController
 
   def show
     @project_members = @project.project_members.includes(:user)
+    base = @project.tickets.includes(:created_by_user, :assigned_to_user).order(:created_at)
+    all_tickets =
+      if current_user.manager?
+        base
+      else
+        base.where(assigned_to_user_id: current_user.id)
+            .or(base.where(created_by_user_id: current_user.id))
+            .distinct
+      end
+    @tickets_by_status = { "open" => [], "in_progress" => [], "resolved" => [], "closed" => [] }
+    all_tickets.each { |t| @tickets_by_status[t.status] << t }
   end
 
   def new

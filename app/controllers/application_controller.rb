@@ -6,7 +6,22 @@ class ApplicationController < ActionController::Base
   stale_when_importmap_changes
   helper_method :current_user, :logged_in?, :manager_for_project?, :can_access_ticket?, :can_edit_ticket?
 
+  before_action :load_sidebar_projects, if: :logged_in?
+
   private
+
+  def load_sidebar_projects
+    @sidebar_projects =
+      if current_user.manager?
+        current_user.created_projects.order(:name)
+      else
+        Project
+          .joins(:project_members)
+          .where(project_members: { user_id: current_user.id, is_active: true })
+          .order(:name)
+          .distinct
+      end
+  end
 
   def current_user
     # ||= Assign value only if it’s nil or not set

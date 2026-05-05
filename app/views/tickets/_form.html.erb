@@ -1,134 +1,116 @@
-<% if ticket.errors.any? %>
-  <div class="bg-red-500/10 border border-red-400/30 text-red-200 p-4 rounded-lg mb-5 text-sm">
-    <ul class="list-disc list-inside space-y-1">
-      <% ticket.errors.full_messages.each do |msg| %>
-        <li><%= msg %></li>
-      <% end %>
-    </ul>
-  </div>
+<%# Data element read by ticket_assignee.js — only present when project can be changed %>
+<% if @project_users_by_id.present? %>
+  <div id="ticket-assignee-data"
+       data-project-users="<%= json_escape(@project_users_by_id.to_json) %>"
+       data-selected-assignee="<%= ticket.assigned_to_user_id %>"
+       class="hidden"></div>
 <% end %>
-<%= form_with model: ticket, html: { multipart: true }, class: "space-y-6" do |form| %>
-  <% if ticket.new_record? %>
+
+<%= form_with model: ticket, html: { multipart: true }, class: "space-y-5" do |form| %>
+  <%# Project field: dropdown when free-choice, read-only card when locked or editing %>
+  <% if ticket.new_record? && !@project_locked %>
     <div>
       <%= form.label :project_id, "Project", class: "block text-sm font-medium text-gray-200 mb-2" %>
       <%= form.select :project_id,
             options_from_collection_for_select(@ticket_projects, :id, :name, ticket.project_id),
             { prompt: "Select project" },
-            class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400",
+            class: "w-full rounded-lg border #{field_border(ticket, :project_id)} bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400",
             data: { project_select: true } %>
+      <%= field_error(ticket, :project_id) %>
     </div>
   <% else %>
-    <div class="rounded-xl border border-white/10 bg-white/10 p-4">
-      <p class="text-sm text-gray-400">Project</p>
-      <p class="mt-1 font-semibold text-white"><%= ticket.project.name %></p>
+    <%# Hidden fields carry the project and locked flag through failed-submit re-renders %>
+    <%= form.hidden_field :project_id %>
+    <% if ticket.new_record? && @project_locked %>
+      <%= hidden_field_tag :locked_project_id, ticket.project_id %>
+    <% end %>
+    <div class="rounded-xl border border-white/10 bg-white/5 p-4 flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-bold border border-indigo-400/20 text-xs shrink-0">
+        <%= ticket.project&.name&.first&.upcase %>
+      </div>
+      <div>
+        <p class="text-xs text-gray-400 mb-0.5">Project</p>
+        <p class="font-semibold text-white text-sm"><%= ticket.project&.name || "—" %></p>
+      </div>
     </div>
   <% end %>
-  <div class="grid gap-6 md:grid-cols-2">
+
+  <div class="grid gap-5 md:grid-cols-2">
     <div>
       <%= form.label :title, class: "block text-sm font-medium text-gray-200 mb-2" %>
       <%= form.text_field :title,
             placeholder: "Enter ticket title",
-            class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white placeholder-gray-400 outline-none focus:border-indigo-400" %>
+            class: "w-full rounded-lg border #{field_border(ticket, :title)} bg-white/10 px-4 py-3 text-white placeholder-gray-400 outline-none focus:border-indigo-400" %>
+      <%= field_error(ticket, :title) %>
     </div>
     <div>
       <%= form.label :assigned_to_user_id, "Assign To", class: "block text-sm font-medium text-gray-200 mb-2" %>
       <%= form.select :assigned_to_user_id,
-            options_for_select((@assignable_users || []).map { |user| [user.name, user.id] }, ticket.assigned_to_user_id),
+            options_for_select((@assignable_users || []).map { |u| [u.name, u.id] }, ticket.assigned_to_user_id),
             { prompt: "Select user" },
-            class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400",
+            class: "w-full rounded-lg border #{field_border(ticket, :assigned_to_user_id)} bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400",
             data: { assignee_select: true } %>
+      <%= field_error(ticket, :assigned_to_user_id) %>
     </div>
   </div>
+
   <div>
     <%= form.label :description, class: "block text-sm font-medium text-gray-200 mb-2" %>
     <%= form.text_area :description,
           rows: 5,
           placeholder: "Enter ticket description",
-          class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white placeholder-gray-400 outline-none focus:border-indigo-400" %>
+          class: "w-full rounded-lg border #{field_border(ticket, :description)} bg-white/10 px-4 py-3 text-white placeholder-gray-400 outline-none focus:border-indigo-400" %>
+    <%= field_error(ticket, :description) %>
   </div>
-  <div class="grid gap-6 md:grid-cols-4">
+
+  <div class="grid gap-5 md:grid-cols-4">
     <div>
       <%= form.label :ticket_type, "Type", class: "block text-sm font-medium text-gray-200 mb-2" %>
       <%= form.select :ticket_type,
-            options_for_select(Ticket.ticket_types.keys.map { |type| [type.humanize, type] }, ticket.ticket_type),
+            options_for_select(Ticket.ticket_types.keys.map { |t| [t.humanize, t] }, ticket.ticket_type),
             { prompt: "Select type" },
-            class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400" %>
+            class: "w-full rounded-lg border #{field_border(ticket, :ticket_type)} bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400" %>
+      <%= field_error(ticket, :ticket_type) %>
     </div>
     <div>
       <%= form.label :status, class: "block text-sm font-medium text-gray-200 mb-2" %>
       <%= form.select :status,
-            options_for_select(Ticket.statuses.keys.map { |status| [status.humanize, status] }, ticket.status || "open"),
+            options_for_select(Ticket.statuses.keys.map { |s| [s.humanize, s] }, ticket.status || "open"),
             {},
-            class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400" %>
+            class: "w-full rounded-lg border #{field_border(ticket, :status)} bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400" %>
+      <%= field_error(ticket, :status) %>
     </div>
     <div>
       <%= form.label :priority, class: "block text-sm font-medium text-gray-200 mb-2" %>
       <%= form.select :priority,
-            options_for_select(Ticket.priorities.keys.map { |priority| [priority.humanize, priority] }, ticket.priority || "medium"),
+            options_for_select(Ticket.priorities.keys.map { |p| [p.humanize, p] }, ticket.priority || "medium"),
             {},
-            class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400" %>
+            class: "w-full rounded-lg border #{field_border(ticket, :priority)} bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400" %>
+      <%= field_error(ticket, :priority) %>
     </div>
     <div>
       <%= form.label :due_date, class: "block text-sm font-medium text-gray-200 mb-2" %>
       <%= form.date_field :due_date,
-            class: "w-full rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400" %>
+            class: "w-full rounded-lg border #{field_border(ticket, :due_date)} bg-white/10 px-4 py-3 text-white outline-none focus:border-indigo-400" %>
+      <%= field_error(ticket, :due_date) %>
     </div>
   </div>
+
   <div>
     <%= form.label :files, "Attachments", class: "block text-sm font-medium text-gray-200 mb-2" %>
-    <button type="button"
-          data-ticket-files-add
-          class="rounded-lg bg-white/10 hover:bg-white/20 text-white px-4 py-3 font-semibold border border-white/10">
-      Add Files
+    <button type="button" data-ticket-files-add
+            class="rounded-lg bg-white/10 hover:bg-white/20 text-white px-4 py-2.5 text-sm font-medium border border-white/10 transition">
+      + Add Files
     </button>
-    <%= form.file_field :files,
-        multiple: true,
-        name: "ticket[files][]",
-        class: "hidden",
-        data: { ticket_files: true } %>
+    <%= form.file_field :files, multiple: true, name: "ticket[files][]", class: "hidden", data: { ticket_files: true } %>
     <div data-ticket-files-list class="mt-3 flex flex-wrap gap-2"></div>
-    <p class="mt-2 text-sm text-gray-400">
-      You can attach one or more files and remove them before submitting.
-    </p>
   </div>
-  <div class="flex flex-col sm:flex-row gap-3 pt-4">
+
+  <div class="flex gap-3 pt-2">
     <%= form.submit ticket.new_record? ? "Create Ticket" : "Update Ticket",
-          class: "bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold cursor-pointer transition shadow-lg shadow-indigo-500/20" %>
-    <%= link_to "Back",
-          tickets_path,
-          class: "text-center bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl font-semibold border border-white/10 transition" %>
+          class: "bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm cursor-pointer transition" %>
+    <%= link_to "Cancel",
+          (ticket.new_record? ? tickets_path : ticket_path(ticket)),
+          class: "bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl font-semibold text-sm border border-white/10 transition" %>
   </div>
-<% end %>
-<% if @project_users_by_id.present? %>
-  <script>
-    document.addEventListener("turbo:load", setupTicketAssigneeSelect);
-    // document.addEventListener("DOMContentLoaded", setupTicketAssigneeSelect);
-
-    function setupTicketAssigneeSelect() {
-      const projectSelect = document.querySelector("[data-project-select='true']");
-      const assigneeSelect = document.querySelector("[data-assignee-select='true']");
-      if (!projectSelect || !assigneeSelect) return;
-
-      const projectUsers = <%= raw json_escape(@project_users_by_id.to_json) %>;
-      const selectedAssignee = "<%= ticket.assigned_to_user_id %>";
-
-      function fillAssignees() {
-        const users = projectUsers[projectSelect.value] || [];
-
-        assigneeSelect.innerHTML = "";
-        assigneeSelect.append(new Option("Select user", ""));
-
-        users.forEach(function(userData) {
-          const option = new Option(userData[0], userData[1]);
-          if (String(userData[1]) === selectedAssignee) {
-            option.selected = true;
-          }
-          assigneeSelect.append(option);
-        });
-      }
-
-      projectSelect.addEventListener("change", fillAssignees);
-      fillAssignees();
-    }
-  </script>
 <% end %>

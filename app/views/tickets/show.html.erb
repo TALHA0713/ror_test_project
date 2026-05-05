@@ -1,295 +1,209 @@
-<section class="min-h-[calc(100vh-132px)] bg-gradient-to-br from-gray-950 via-gray-900 to-indigo-950 px-4 py-10">
-  <div class="max-w-6xl mx-auto space-y-6">
-    <% if notice %>
-      <div class="rounded-xl border border-green-400/30 bg-green-500/10 p-4 text-green-200">
-        <%= notice %>
+<% content_for :page_header do %>
+  <div class="flex items-start justify-between gap-4">
+    <div class="min-w-0">
+      <%= link_to project_path(@ticket.project),
+          class: "text-xs text-gray-500 hover:text-gray-300 transition flex items-center gap-1 mb-2" do %>
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        <%= @ticket.project.name %>
+      <% end %>
+      <div class="flex items-center gap-3 flex-wrap">
+        <span class="text-sm font-mono text-indigo-300 shrink-0"><%= @ticket.ticket_label %></span>
+        <h1 class="text-xl font-bold text-white break-words" style="overflow-wrap:anywhere"><%= @ticket.title %></h1>
       </div>
-    <% end %>
-    <% if alert %>
-      <div class="rounded-xl border border-red-400/30 bg-red-500/10 p-4 text-red-200">
-        <%= alert %>
-      </div>
-    <% end %>
-    <div class="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-xl shadow-2xl p-6">
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
-        <div>
-          <p class="text-indigo-300 font-semibold"><%= @ticket.ticket_label %></p>
-          <h1 class="text-3xl font-bold text-white mt-1"><%= @ticket.title %></h1>
-        </div>
-        <% if can_edit_ticket?(@ticket) %>
-          <%= link_to "Edit Ticket",
-              edit_ticket_path(@ticket),
-              class: "bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-semibold text-center" %>
-        <% end %>
-      </div>
-      <div class="flex flex-wrap gap-1 border-b border-white/10 mb-5">
-        <button type="button"
-                data-ticket-tab="overview"
-                class="cursor-pointer px-4 py-2 text-sm font-medium text-white border-b-2 border-indigo-400">
-          Overview
-        </button>
-        <button type="button"
-                data-ticket-tab="details"
-                class="cursor-pointer px-4 py-2 text-sm font-medium text-gray-300 hover:text-white border-b-2 border-transparent">
-          Details
-        </button>
-        <button type="button"
-                data-ticket-tab="people"
-                class="cursor-pointer px-4 py-2 text-sm font-medium text-gray-300 hover:text-white border-b-2 border-transparent">
-          People
-        </button>
-        <button type="button"
-                data-ticket-tab="attachments"
-                class="cursor-pointer px-4 py-2 text-sm font-medium text-gray-300 hover:text-white border-b-2 border-transparent">
-          Attachments
-          <% if @attachments.any? %>
-            <span class="ml-1 inline-flex items-center justify-center text-xs bg-white/10 rounded-full px-2 py-0.5">
-              <%= @attachments.size %>
-            </span>
-          <% end %>
-        </button>
-      </div>
-      <div data-ticket-pane="overview">
-        <p class="text-gray-300 whitespace-pre-wrap">
-          <%= @ticket.description.presence || "No description provided." %>
-        </p>
-      </div>
-      <div data-ticket-pane="details" class="hidden">
-        <div class="grid gap-4 md:grid-cols-2">
-          <div class="rounded-xl border border-white/10 bg-white/5 p-4">
-            <p class="text-sm text-gray-400">Project</p>
-            <p class="mt-2 text-white font-semibold"><%= @ticket.project.name %></p>
-          </div>
-          <div class="rounded-xl border border-white/10 bg-white/5 p-4">
-            <p class="text-sm text-gray-400">Type</p>
-            <p class="mt-2 text-white font-semibold"><%= @ticket.ticket_type.humanize %></p>
-          </div>
-          <div class="rounded-xl border border-white/10 bg-white/5 p-4">
-            <p class="text-sm text-gray-400">Status</p>
-            <p class="mt-2 text-white font-semibold"><%= @ticket.status.humanize %></p>
-          </div>
-          <div class="rounded-xl border border-white/10 bg-white/5 p-4">
-            <p class="text-sm text-gray-400">Priority</p>
-            <p class="mt-2 text-white font-semibold"><%= @ticket.priority.humanize %></p>
-          </div>
-        </div>
-      </div>
-      <div data-ticket-pane="people" class="hidden">
-        <div class="grid gap-4 md:grid-cols-2">
-          <div class="rounded-xl border border-white/10 bg-white/5 p-4">
-            <p class="text-sm text-gray-400">Assigned To</p>
-            <p class="mt-2 text-white font-semibold"><%= @ticket.assigned_to_user&.name %></p>
-          </div>
-          <div class="rounded-xl border border-white/10 bg-white/5 p-4">
-            <p class="text-sm text-gray-400">Created By</p>
-            <p class="mt-2 text-white font-semibold"><%= @ticket.created_by_user.name %></p>
-          </div>
-          <div class="rounded-xl border border-white/10 bg-white/5 p-4">
-            <p class="text-sm text-gray-400">Due Date</p>
-            <p class="mt-2 text-white font-semibold">
-              <%= @ticket.due_date.present? ? @ticket.due_date.strftime("%d %b %Y") : "Not set" %>
-            </p>
-          </div>
-          <div class="rounded-xl border border-white/10 bg-white/5 p-4">
-            <p class="text-sm text-gray-400">Last Updated</p>
-            <p class="mt-2 text-white font-semibold"><%= @ticket.updated_at.strftime("%d %b %Y") %></p>
-          </div>
-        </div>
-      </div>
-      <div data-ticket-pane="attachments" class="hidden">
-        <% if @attachments.any? %>
-          <div class="grid gap-3 md:grid-cols-2">
-            <% @attachments.each do |attachment| %>
-              <div class="rounded-xl border border-white/10 bg-white/5 p-4">
-                <p class="font-semibold text-white break-all"><%= attachment.file_name %></p>
-                <p class="mt-1 text-sm text-gray-400">
-                  Uploaded by <%= attachment.uploaded_by_user.name %>
-                  <% if attachment.file_size.present? %>
-                    · <%= number_to_human_size(attachment.file_size) %>
-                  <% end %>
-                </p>
-                <%= link_to "Open File",
-                    attachment.file_path,
-                    target: "_blank",
-                    rel: "noopener",
-                    class: "inline-block mt-3 rounded-lg bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 text-sm" %>
-              </div>
-            <% end %>
-          </div>
-        <% else %>
-          <p class="text-gray-400">No attachments uploaded for this ticket.</p>
-        <% end %>
+      <div class="flex items-center gap-2 mt-2 flex-wrap">
+        <span class="text-xs px-2 py-0.5 rounded-full <%= ticket_status_classes(@ticket.status) %>">
+          <%= @ticket.status.humanize %>
+        </span>
+        <span class="text-xs px-2 py-0.5 rounded-full <%= ticket_priority_classes(@ticket.priority) %>">
+          <%= @ticket.priority.capitalize %>
+        </span>
+        <span class="text-xs text-gray-500">Updated <%= @ticket.updated_at.strftime("%d %b %Y") %></span>
       </div>
     </div>
-    <div class="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-xl p-6">
-      <h2 class="text-2xl font-bold text-white mb-5">Messages</h2>
-      <%= form_with model: [@ticket, @comment], html: { multipart: true }, class: "space-y-3 mb-8" do |form| %>
-        <% if @comment.errors.any? %>
-          <div class="bg-red-500/10 border border-red-400/30 text-red-200 p-4 rounded-lg text-sm">
-            <ul class="list-disc list-inside space-y-1">
-              <% @comment.errors.full_messages.each do |msg| %>
-                <li><%= msg %></li>
-              <% end %>
-            </ul>
-          </div>
-        <% end %>
-        <div class="relative">
-          <%= form.text_area :comment,
-                rows: 4,
-                placeholder: "Write your message here",
-                class: "w-full pr-14 rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-white placeholder-gray-400 outline-none focus:border-indigo-400" %>
-          <button type="button"
-                  data-comment-files-add
-                  title="Attach files"
-                  class="absolute bottom-2 left-0 inline-flex items-center justify-center w-9 h-9 text-white text-xl leading-none cursor-pointer">
-            +
-          </button>
-          <%= form.file_field :files,
-              multiple: true,
-              class: "hidden",
-              data: { comment_files: true } %>
-        </div>
-        <div data-comment-files-list class="flex flex-wrap gap-2"></div>
-        <%= form.submit "Send Message",
-              class: "cursor-pointer rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-3 font-semibold" %>
+    <% if can_edit_ticket?(@ticket) %>
+      <%= link_to edit_ticket_path(@ticket),
+          class: "bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition shrink-0" do %>
+        Edit Ticket
       <% end %>
-      <% if @comments.any? %>
-        <div class="space-y-4">
-          <% @comments.each do |comment| %>
-            <div class="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div class="flex items-center justify-between gap-3">
-                <p class="font-semibold text-white"><%= comment.user.name %></p>
-                <p class="text-sm text-gray-400"><%= comment.created_at.strftime("%d %b %Y %I:%M %p") %></p>
-              </div>
-              <p class="mt-3 text-gray-300 whitespace-pre-wrap"><%= comment.comment %></p>
-              <% if comment.attachments.any? %>
-                <div class="mt-3 flex flex-wrap gap-2">
-                  <% comment.attachments.each do |attachment| %>
-                    <%= link_to attachment.file_path,
-                        target: "_blank",
-                        rel: "noopener",
-                        class: "inline-flex items-center gap-2 rounded-lg bg-white/10 hover:bg-white/20 text-white px-3 py-2 text-sm border border-white/10" do %>
-                      <span class="break-all"><%= attachment.file_name %></span>
-                      <% if attachment.file_size.present? %>
-                        <span class="text-xs text-gray-400">(<%= number_to_human_size(attachment.file_size) %>)</span>
-                      <% end %>
-                    <% end %>
-                  <% end %>
+    <% end %>
+  </div>
+<% end %>
+
+<div class="px-8 py-6">
+  <div class="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)] items-start">
+    <!-- Left Details sidebar -->
+    <aside class="space-y-4 self-start lg:sticky lg:top-6">
+      <div class="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+        <div class="p-4 border-b border-white/10">
+          <h2 class="text-sm font-semibold text-white">Ticket Details</h2>
+        </div>
+        <div class="p-4 divide-y divide-white/10 text-sm">
+          <div class="flex items-center justify-between gap-3 py-3 first:pt-0">
+            <p class="text-gray-400 shrink-0">Type</p>
+            <p class="text-white font-medium text-right"><%= @ticket.ticket_type.humanize %></p>
+          </div>
+          <div class="flex items-center justify-between gap-3 py-3">
+            <p class="text-gray-400 shrink-0">Status</p>
+            <span class="inline-flex px-2 py-0.5 rounded-full text-xs <%= ticket_status_classes(@ticket.status) %>">
+              <%= @ticket.status.humanize %>
+            </span>
+          </div>
+          <div class="flex items-center justify-between gap-3 py-3">
+            <p class="text-gray-400 shrink-0">Priority</p>
+            <span class="inline-flex px-2 py-0.5 rounded-full text-xs <%= ticket_priority_classes(@ticket.priority) %>">
+              <%= @ticket.priority.capitalize %>
+            </span>
+          </div>
+          <div class="flex items-start justify-between gap-3 py-3">
+            <p class="text-gray-400 shrink-0">Created By</p>
+            <p class="text-white font-medium text-right break-words" style="overflow-wrap:anywhere">
+              <%= @ticket.created_by_user.name %>
+            </p>
+          </div>
+          <div class="flex items-start justify-between gap-3 py-3">
+            <p class="text-gray-400 shrink-0">Assigned To</p>
+            <p class="text-white font-medium text-right break-words" style="overflow-wrap:anywhere">
+              <%= ticket_assigned_name(@ticket) %>
+            </p>
+          </div>
+          <div class="flex items-center justify-between gap-3 py-3">
+            <p class="text-gray-400 shrink-0">Due Date</p>
+            <p class="text-white font-medium text-right"><%= ticket_due_date(@ticket) %></p>
+          </div>
+          <div class="flex items-center justify-between gap-3 py-3 last:pb-0">
+            <p class="text-gray-400 shrink-0">Updated</p>
+            <p class="text-white font-medium text-right"><%= @ticket.updated_at.strftime("%d %b %Y") %></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Attachments -->
+      <div class="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+        <div class="p-4 border-b border-white/10 flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-white">Files</h2>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-gray-300 border border-white/10">
+            <%= @attachments.size %>
+          </span>
+        </div>
+        <div class="p-4">
+          <% if @attachments.any? %>
+            <div class="space-y-2">
+              <% @attachments.each do |a| %>
+                <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                  <p class="font-medium text-white text-sm break-words" style="overflow-wrap:anywhere"><%= a.file_name %></p>
+                  <p class="text-xs text-gray-400 mt-0.5">
+                    <%= a.uploaded_by_user.name %>
+                    <% if a.file_size.present? %> · <%= number_to_human_size(a.file_size) %><% end %>
+                  </p>
+                  <%= link_to "Open", a.file_path, target: "_blank", rel: "noopener",
+                      class: "inline-block mt-2 rounded-lg bg-white/10 hover:bg-white/20 text-white px-3 py-1 text-xs border border-white/10" %>
                 </div>
               <% end %>
             </div>
+          <% else %>
+            <p class="text-gray-500 text-sm">No attachments.</p>
           <% end %>
         </div>
-      <% else %>
-        <p class="text-gray-400">No messages yet.</p>
-      <% end %>
-    </div>
-    <div>
-      <%= link_to "← Back to Tickets",
-          tickets_path,
-          class: "text-gray-300 hover:text-white" %>
-    </div>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="space-y-5 min-w-0">
+      <!-- Description -->
+      <div class="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+        <div class="p-4 border-b border-white/10">
+          <h2 class="text-sm font-semibold text-white">Description</h2>
+        </div>
+        <div class="p-5">
+          <p class="text-gray-300 leading-7 break-words" style="overflow-wrap:anywhere">
+            <%= @ticket.description.presence || "No description provided." %>
+          </p>
+        </div>
+      </div>
+
+      <!-- Add Message -->
+      <div class="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+        <div class="p-4 border-b border-white/10">
+          <h2 class="text-sm font-semibold text-white">Add Message</h2>
+        </div>
+        <div class="p-5">
+          <%= form_with model: [@ticket, @comment], html: { multipart: true }, class: "space-y-3" do |form| %>
+            <% if @comment.errors.any? %>
+              <div class="bg-red-500/10 border border-red-400/30 text-red-200 p-3 rounded-lg text-sm">
+                <ul class="list-disc list-inside space-y-1">
+                  <% @comment.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+                </ul>
+              </div>
+            <% end %>
+            <%= form.text_area :comment, rows: 4,
+                placeholder: "Write your message here...",
+                class: "w-full rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-white placeholder-gray-400 outline-none focus:border-indigo-400 resize-y" %>
+            <div data-comment-files-list class="flex flex-wrap gap-2"></div>
+            <div class="flex items-center justify-between gap-3">
+              <button type="button" data-comment-files-add
+                class="cursor-pointer bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-xl border border-white/10 text-sm transition">
+                + Attach File
+              </button>
+              <%= form.file_field :files, multiple: true, class: "hidden", data: { comment_files: true } %>
+              <%= form.submit "Send Message",
+                  class: "cursor-pointer bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl font-semibold text-sm transition" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div class="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+        <div class="p-4 border-b border-white/10 flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-white">Messages</h2>
+          <% if @comments.any? %>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-gray-300 border border-white/10"><%= @comments.size %></span>
+          <% end %>
+        </div>
+        <div class="p-5">
+          <% if @comments.any? %>
+            <div class="space-y-4">
+              <% @comments.each do |comment| %>
+                <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                  <div class="flex items-start gap-3">
+                    <div class="h-9 w-9 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-bold border border-indigo-400/20 shrink-0 text-xs">
+                      <%= user_initials(comment.user) %>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center justify-between gap-2">
+                        <p class="text-white font-semibold text-sm"><%= comment.user.name %></p>
+                        <p class="text-gray-500 text-xs shrink-0"><%= comment.created_at.strftime("%d %b %Y %I:%M %p") %></p>
+                      </div>
+                      <p class="mt-2 text-gray-300 text-sm leading-6 break-words" style="overflow-wrap:anywhere">
+                        <%= comment.comment %>
+                      </p>
+                      <% if comment.attachments.any? %>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                          <% comment.attachments.each do |a| %>
+                            <%= link_to a.file_path, target: "_blank", rel: "noopener",
+                                class: "inline-flex items-center gap-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 text-xs border border-white/10 max-w-full" do %>
+                              <span class="break-all min-w-0"><%= a.file_name %></span>
+                              <% if a.file_size.present? %>
+                                <span class="text-gray-400 shrink-0">(<%= number_to_human_size(a.file_size) %>)</span>
+                              <% end %>
+                            <% end %>
+                          <% end %>
+                        </div>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="py-8 text-center">
+              <p class="text-gray-400 text-sm">No messages yet. Send the first one.</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </main>
   </div>
-</section>
-<%# <script>
-  document.addEventListener("turbo:load", setupTicketShowPage);
-
-  function setupTicketShowPage() {
-    setupTicketTabs();
-    setupCommentAttachments();
-  }
-
-  function setupTicketTabs() {
-    const tabButtons = document.querySelectorAll("[data-ticket-tab]");
-    const tabPanes = document.querySelectorAll("[data-ticket-pane]");
-    if (tabButtons.length === 0 || tabPanes.length === 0) return;
-
-    const activeClasses = ["text-white", "border-indigo-400"];
-    const inactiveClasses = ["text-gray-300", "hover:text-white", "border-transparent"];
-
-    tabButtons.forEach(function(button) {
-      if (button.dataset.initialized === "true") return;
-      button.dataset.initialized = "true";
-
-      button.addEventListener("click", function() {
-        const target = button.dataset.ticketTab;
-
-        tabButtons.forEach(function(btn) {
-          if (btn === button) {
-            btn.classList.add(...activeClasses);
-            btn.classList.remove(...inactiveClasses);
-          } else {
-            btn.classList.remove(...activeClasses);
-            btn.classList.add(...inactiveClasses);
-          }
-        });
-
-        tabPanes.forEach(function(pane) {
-          pane.classList.toggle("hidden", pane.dataset.ticketPane !== target);
-        });
-      });
-    });
-  }
-
-  function setupCommentAttachments() {
-    const fileInput = document.querySelector("[data-comment-files]");
-    const addButton = document.querySelector("[data-comment-files-add]");
-    const filesList = document.querySelector("[data-comment-files-list]");
-    if (!fileInput || !addButton || !filesList) return;
-
-    if (addButton.dataset.initialized === "true") return;
-    addButton.dataset.initialized = "true";
-
-    let selectedFiles = [];
-
-    addButton.addEventListener("click", function() {
-      fileInput.click();
-    });
-
-    fileInput.addEventListener("change", function() {
-      selectedFiles = selectedFiles.concat(Array.from(fileInput.files));
-      updateFileInput();
-      renderFiles();
-    });
-
-
-      function updateFileInput() {
-        const dataTransfer = new DataTransfer();
-      
-        selectedFiles.forEach(function(file) {
-          dataTransfer.items.add(file);
-        });
-
-        fileInput.files = dataTransfer.files;
-      }
-
-
-    function renderFiles() {
-      filesList.innerHTML = "";
-
-      selectedFiles.forEach(function(file, index) {
-        const item = document.createElement("div");
-        item.className = "inline-flex items-center gap-2 rounded-lg bg-white/10 border border-white/10 text-white px-3 py-2 text-sm";
-
-        const name = document.createElement("span");
-        name.className = "break-all";
-        name.textContent = file.name;
-
-        const removeBtn = document.createElement("button");
-        removeBtn.type = "button";
-        removeBtn.className = "text-gray-300 hover:text-red-400 cursor-pointer leading-none text-lg";
-        removeBtn.textContent = "×";
-
-        removeBtn.addEventListener("click", function() {
-          selectedFiles.splice(index, 1);
-          updateFileInput();
-          renderFiles();
-        });
-
-        item.appendChild(name);
-        item.appendChild(removeBtn);
-        filesList.appendChild(item);
-      });
-    }
-  }
-</script> %>
+</div>

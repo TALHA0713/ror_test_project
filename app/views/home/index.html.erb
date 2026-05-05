@@ -1,66 +1,160 @@
-<section class="bg-gradient-to-br from-gray-900 via-gray-800 to-indigo-900 text-white">
-  <div class="max-w-7xl mx-auto px-6 py-24 text-center">
-    <h1 class="text-5xl font-bold mb-6">
-      Ticket Tracking System
-    </h1>
+<% if logged_in? %>
 
-    <p class="max-w-2xl mx-auto text-lg text-gray-300 mb-10">
-      Manage projects, assign roles, track tickets, and keep your team organized
-      with a clean and practical workflow.
+  <% content_for :page_header do %>
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Overview</p>
+        <h1 class="text-xl font-bold text-white">Dashboard</h1>
+        <p class="text-gray-400 text-sm mt-0.5">Welcome back, <%= current_user.name.split.first %></p>
+      </div>
+      <div class="flex gap-2">
+        <% if current_user.manager? %>
+          <%= link_to new_project_path,
+              class: "flex items-center gap-1.5 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition" do %>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            New Project
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="px-8 py-6 space-y-6">
+    <!-- Stats row -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+        <p class="text-gray-400 text-xs uppercase tracking-wider mb-2">Projects</p>
+        <p class="text-3xl font-bold text-white"><%= @sidebar_projects.size %></p>
+      </div>
+      <div class="rounded-2xl border border-blue-400/20 bg-blue-400/5 p-5">
+        <p class="text-blue-300 text-xs uppercase tracking-wider mb-2">Pending</p>
+        <p class="text-3xl font-bold text-white"><%= @open_count %></p>
+      </div>
+      <div class="rounded-2xl border border-yellow-400/20 bg-yellow-400/5 p-5">
+        <p class="text-yellow-300 text-xs uppercase tracking-wider mb-2">In Progress</p>
+        <p class="text-3xl font-bold text-white"><%= @in_progress_count %></p>
+      </div>
+      <div class="rounded-2xl border border-green-400/20 bg-green-400/5 p-5">
+        <p class="text-green-300 text-xs uppercase tracking-wider mb-2">Complete</p>
+        <p class="text-3xl font-bold text-white"><%= @resolved_count %></p>
+      </div>
+    </div>
+
+    <div class="grid gap-4 lg:grid-cols-2">
+      <!-- Projects list -->
+      <div class="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+        <div class="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-white">Your Projects</h2>
+          <span class="text-xs text-gray-200"><%= @sidebar_projects.size %> total</span>
+        </div>
+        <% if @sidebar_projects.any? %>
+          <div class="divide-y divide-white/5">
+            <% @sidebar_projects.each do |project| %>
+              <%= link_to project_path(project), class: "flex items-center gap-3 px-5 py-3.5 hover:bg-white/5 transition group" do %>
+                <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-bold border border-indigo-400/20 text-xs shrink-0">
+                  <%= project.name.first.upcase %>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-white text-sm font-medium group-hover:text-indigo-300 transition truncate"><%= project.name %></p>
+                  <p class="text-gray-500 text-xs truncate"><%= project.description.presence || "No description" %></p>
+                </div>
+                <svg class="w-4 h-4 text-gray-200 group-hover:text-gray-400 transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              <% end %>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="px-5 py-10 text-center">
+            <p class="text-gray-400 text-sm mb-3">No projects yet</p>
+            <% if current_user.manager? %>
+              <%= link_to "Create your first project", new_project_path,
+                  class: "text-indigo-400 hover:text-indigo-300 text-sm transition" %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Recent tickets -->
+      <div class="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+        <div class="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-white">Recent Tickets</h2>
+          <span class="text-xs text-gray-200"><%= @total_count %> total</span>
+        </div>
+        <% if @recent_tickets.any? %>
+          <div class="divide-y divide-white/5">
+            <% @recent_tickets.each do |ticket| %>
+              <%= link_to ticket_path(ticket), class: "flex items-center gap-3 px-5 py-3.5 hover:bg-white/5 transition group" do %>
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-2 mb-0.5">
+                    <span class="text-xs text-gray-500 font-mono shrink-0"><%= ticket.ticket_label %></span>
+                    <span class="text-xs px-1.5 py-0.5 rounded-full <%= ticket_status_classes(ticket.status) %>">
+                      <%= ticket.status.humanize %>
+                    </span>
+                  </div>
+                  <p class="text-white text-sm font-medium group-hover:text-indigo-300 transition truncate"><%= ticket.title %></p>
+                  <p class="text-gray-500 text-xs truncate"><%= ticket.project.name %></p>
+                </div>
+                <span class="text-xs text-gray-200 shrink-0"><%= ticket.updated_at.strftime("%d %b") %></span>
+              <% end %>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="px-5 py-10 text-center">
+            <p class="text-gray-400 text-sm">No tickets yet</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+<% else %>
+  <!-- Logged-out landing -->
+  <div class="min-h-screen flex flex-col items-center justify-center px-6 py-20 text-center">
+    <img src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
+         class="h-14 w-14 mb-6" alt="Logo" />
+    <h1 class="text-5xl font-bold text-white mb-4">Ticket Tracking</h1>
+    <p class="text-gray-400 text-lg max-w-xl mb-10">
+      Manage projects, track bugs, assign tickets, and ship faster — all in one place.
     </p>
-</section>
-
-<section class="max-w-7xl mx-auto px-6 py-20">
-  <div class="text-center mb-14">
-    <h2 class="text-3xl font-bold text-gray-900">
-      What this system helps with
-    </h2>
-    <p class="text-gray-600 mt-3">
-      Built for teams that need a simple way to organize work.
-    </p>
-  </div>
-
-  <div class="grid gap-8 md:grid-cols-3">
-    <div class="bg-white p-8 rounded-2xl shadow-sm border">
-      <div class="text-4xl mb-4">📁</div>
-      <h3 class="text-xl font-semibold mb-3">Project Management</h3>
-      <p class="text-gray-600">
-        Create projects and keep related tickets, members, and tasks organized.
-      </p>
+    <div class="flex gap-3">
+      <%= link_to "Get Started", signup_path,
+          class: "bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold transition shadow-lg shadow-indigo-500/20" %>
+      <%= link_to "Login", login_path,
+          class: "bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl font-semibold border border-white/10 transition" %>
     </div>
 
-    <div class="bg-white p-8 rounded-2xl shadow-sm border">
-      <div class="text-4xl mb-4">🎫</div>
-      <h3 class="text-xl font-semibold mb-3">Ticket Tracking</h3>
-      <p class="text-gray-600">
-        Track bugs, issues, feature requests, and task progress in one place.
-      </p>
-    </div>
-
-    <div class="bg-white p-8 rounded-2xl shadow-sm border">
-      <div class="text-4xl mb-4">👥</div>
-      <h3 class="text-xl font-semibold mb-3">Role Assignment</h3>
-      <p class="text-gray-600">
-        Assign users to roles so everyone knows their responsibility.
-      </p>
-    </div>
-  </div>
-</section>
-
-<section class="bg-gray-100">
-  <div class="max-w-7xl mx-auto px-6 py-20">
-    <div class="bg-white rounded-3xl shadow-sm border p-10 md:p-14 text-center">
-      <h2 class="text-3xl font-bold text-gray-900 mb-4">
-        Start organizing your workflow
-      </h2>
-
-      <p class="text-gray-600 max-w-2xl mx-auto mb-8">
-        This project will grow into a complete ticket tracking system with
-        users, projects, tickets, comments, attachments, and permissions.
-      </p>
-
-      <%= link_to "Explore Projects", projects_path,
-        class: "inline-block bg-gray-900 hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-medium" %>
+    <!-- Feature cards -->
+    <div class="mt-20 grid gap-4 sm:grid-cols-3 max-w-3xl w-full text-left">
+      <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/20 flex items-center justify-center mb-4">
+          <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+          </svg>
+        </div>
+        <h3 class="text-white font-semibold mb-2">Projects</h3>
+        <p class="text-gray-400 text-sm">Organize tickets under projects and manage team members by role.</p>
+      </div>
+      <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <div class="w-10 h-10 rounded-xl bg-yellow-500/20 border border-yellow-400/20 flex items-center justify-center mb-4">
+          <svg class="w-5 h-5 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+        </div>
+        <h3 class="text-white font-semibold mb-2">Kanban Board</h3>
+        <p class="text-gray-400 text-sm">Drag tickets across Pending, In Progress, Complete and Closed columns.</p>
+      </div>
+      <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <div class="w-10 h-10 rounded-xl bg-green-500/20 border border-green-400/20 flex items-center justify-center mb-4">
+          <svg class="w-5 h-5 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </div>
+        <h3 class="text-white font-semibold mb-2">Roles & Permissions</h3>
+        <p class="text-gray-400 text-sm">Manager, Developer and QA roles with fine-grained access control.</p>
+      </div>
     </div>
   </div>
-</section>
+<% end %>

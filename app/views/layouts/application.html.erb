@@ -22,13 +22,34 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="min-h-screen flex flex-col">
-    <%= render "shared/header" %>
+  <body class="bg-gray-950 <%= logged_in? ? 'h-screen overflow-hidden flex' : 'min-h-screen' %>">
+    <% if logged_in? %>
+      <%= render "shared/sidebar" %>
 
-    <main class="flex-1">
-      <%= yield %>
-    </main>
+      <!-- Right panel: overflow-hidden so only <main> scrolls, not the whole panel -->
+      <div class="flex-1 overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-indigo-950 flex flex-col">
 
-    <%= render "shared/footer" %>
+        <!-- Consistent page header bar (each view fills this via content_for :page_header) -->
+        <% if content_for?(:page_header) %>
+          <div class="shrink-0 border-b border-white/10 bg-white/[0.03] px-8 py-5">
+            <%= yield :page_header %>
+          </div>
+        <% end %>
+
+        <%= render "shared/flash" %>
+
+        <!-- min-h-0 lets this flex item shrink below its content; overflow-y-auto scrolls form pages -->
+        <main class="flex-1 min-h-0 overflow-y-auto">
+          <%= yield %>
+        </main>
+      </div>
+
+    <% else %>
+      <div class="flex-1">
+        <main class="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-indigo-950">
+          <%= yield %>
+        </main>
+      </div>
+    <% end %>
   </body>
 </html>

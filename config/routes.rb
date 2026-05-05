@@ -15,6 +15,9 @@ Rails.application.routes.draw do
   end
 
   resources :tickets, only: [ :index, :new, :create, :show, :edit, :update ] do
+    member do
+      patch :update_status
+    end
     resources :comments, only: :create
   end
   match "*path", to: "errors#not_found", via: :all

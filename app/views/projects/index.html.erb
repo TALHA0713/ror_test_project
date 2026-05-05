@@ -1,102 +1,81 @@
-<section class="min-h-[calc(100vh-132px)] bg-gradient-to-br from-gray-950 via-gray-900 to-indigo-950 px-4 py-10">
-  <div class="max-w-6xl mx-auto">
-    <% if notice %>
-      <div class="mb-6 rounded-xl border border-green-400/30 bg-green-500/10 p-4 text-green-200">
-        <%= notice %>
-      </div>
-    <% end %>
-    <% if alert %>
-      <div class="mb-6 rounded-xl border border-red-400/30 bg-red-500/10 p-4 text-red-200">
-        <%= alert %>
-      </div>
-    <% end %>
-    <div class="flex items-center justify-between mb-8">
-      <div>
-        <h1 class="text-3xl font-bold text-white">
-          <%= current_user.manager? ? "My Projects" : "Assigned Projects" %>
-        </h1>
-        <p class="text-gray-400 mt-2">
-          <% if current_user.manager? %>
-            Projects created by you.
-          <% else %>
-            Projects where you are added as a member.
-          <% end %>
-        </p>
-      </div>
-      <% if current_user.manager? %>
-        <%= link_to "Create Project",
-            new_project_path,
-            data: { turbo: false },
-            class: "bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-3 rounded-xl font-semibold" %>
-      <% end %>
+<% content_for :page_header do %>
+  <div class="flex items-center justify-between">
+    <div>
+      <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Projects</p>
+      <h1 class="text-xl font-bold text-white">
+        <%= current_user.manager? ? "My Projects" : "Assigned Projects" %>
+      </h1>
+      <p class="text-gray-400 text-sm mt-0.5">
+        <%= current_user.manager? ? "Projects created by you." : "Projects where you are a member." %>
+      </p>
     </div>
-    <% if @projects.any? %>
-      <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/10 backdrop-blur-xl shadow-2xl">
-        <table class="min-w-full divide-y divide-white/10">
-          <thead class="bg-white/10">
-            <tr>
-              <th class="px-6 py-4 text-left text-xs font-semibold uppercase text-gray-300">Project</th>
-              <th class="px-6 py-4 text-left text-xs font-semibold uppercase text-gray-300">Members</th>
-              <th class="px-6 py-4 text-left text-xs font-semibold uppercase text-gray-300">Tickets</th >
-              <th class="px-6 py-4 text-left text-xs font-semibold uppercase text-gray-300">Created</th>
-              <th class="px-6 py-4 text-right text-xs font-semibold uppercase text-gray-300">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-white/10">
-            <% @projects.each do |project| %>
-              <tr class="hover:bg-white/5 transition">
-                <td class="px-6 py-5">
-                  <p class="font-semibold text-white"><%= project.name %></p>
-                  <p class="text-sm text-gray-400">
-                    <%= project.description.presence || "No description" %>
-                  </p>
-                </td>
-                <td class="px-6 py-5 text-gray-300">
-                  <%= project.project_members.count %>
-                </td>
-                <td class="px-6 py-5 text-gray-300">
-                  <%= project.tickets.size %>
-                </td> 
-                <td class="px-6 py-5 text-gray-300">
-                  <%= project.created_at.strftime("%d %b %Y") %>
-                </td>
-                <td class="px-6 py-5 text-right">
-                  <div class="flex justify-end gap-2">
-                    <%= link_to "View",
-                        project_path(project),
-                        class: "px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm" %>
-                    <% if current_user.manager? && project.created_by_user_id == current_user.id %>
-                      <%= link_to "Edit",
-                          edit_project_path(project),
-                          class: "px-3 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white text-sm" %>
-                      <%= button_to "Delete",
-                          project_path(project),
-                          method: :delete,
-                          data: { turbo_confirm: "Are you sure?" },
-                          class: "px-3 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm" %>
-                    <% end %>
-                  </div>
-                </td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
-    <% else %>
-      <div class="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-xl p-10 text-center">
-        <% if current_user.manager? %>
-          <h2 class="text-2xl font-bold text-white">No project created yet</h2>
-          <p class="text-gray-400 mt-2">You have not created any project. Please create one.</p>
-          <%= link_to "Create Project",
-              new_project_path,
-              data: { turbo: false },
-              class: "inline-block mt-6 bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold" %>
-
-        <% else %>
-          <h2 class="text-2xl font-bold text-white">Currently you are not associated with any project</h2>
-          <p class="text-gray-400 mt-2">Please check with your project manager.</p>
-        <% end %>
-      </div>
+    <% if current_user.manager? %>
+      <%= link_to new_project_path,
+          class: "flex items-center gap-1.5 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition" do %>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        New Project
+      <% end %>
     <% end %>
   </div>
-</section>
+<% end %>
+
+<div class="px-8 py-6">
+  <% if @projects.any? %>
+    <div class="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+      <table class="min-w-full divide-y divide-white/10">
+        <thead class="bg-white/5">
+          <tr>
+            <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Project</th>
+            <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Members</th>
+            <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Tickets</th>
+            <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Created</th>
+            <th class="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-400">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/10">
+          <% @projects.each do |project| %>
+            <tr class="hover:bg-white/5 transition">
+              <td class="px-5 py-4">
+                <p class="font-semibold text-white text-sm"><%= project.name %></p>
+                <p class="text-xs text-gray-400 mt-0.5 max-w-xs truncate">
+                  <%= project.description.presence || "No description" %>
+                </p>
+              </td>
+              <td class="px-5 py-4 text-gray-300 text-sm"><%= project.project_members.count %></td>
+              <td class="px-5 py-4 text-gray-300 text-sm"><%= project.tickets.size %></td>
+              <td class="px-5 py-4 text-gray-400 text-sm"><%= project.created_at.strftime("%d %b %Y") %></td>
+              <td class="px-5 py-4 text-right">
+                <div class="flex justify-end gap-2">
+                  <%= link_to "View", project_path(project),
+                      class: "px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs transition" %>
+                  <% if current_user.manager? && project.created_by_user_id == current_user.id %>
+                    <%= link_to "Edit", edit_project_path(project),
+                        class: "px-3 py-1.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 border border-indigo-400/20 text-xs transition" %>
+                    <%= button_to "Delete", project_path(project),
+                        method: :delete,
+                        data: { turbo_confirm: "Delete this project?" },
+                        class: "px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-400/20 text-xs cursor-pointer transition" %>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="rounded-2xl border border-white/10 bg-white/5 p-12 text-center">
+      <% if current_user.manager? %>
+        <p class="text-white font-semibold mb-2">No projects yet</p>
+        <p class="text-gray-400 text-sm mb-5">You haven't created any projects.</p>
+        <%= link_to "Create your first project", new_project_path,
+            class: "inline-flex items-center gap-1.5 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition" %>
+      <% else %>
+        <p class="text-white font-semibold mb-2">No projects assigned</p>
+        <p class="text-gray-400 text-sm">Ask your project manager to add you to a project.</p>
+      <% end %>
+    </div>
+  <% end %>
+</div>

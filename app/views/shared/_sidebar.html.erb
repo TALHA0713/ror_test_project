@@ -1,0 +1,77 @@
+<aside id="app-sidebar" class="w-64 flex-shrink-0 bg-gray-900 border-r border-white/10 flex flex-col h-screen">
+  <!-- Logo -->
+  <div class="p-4 border-b border-white/10">
+    <%= link_to root_path, class: "flex items-center gap-3 min-w-0" do %>
+      <img src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
+           class="h-8 w-8 shrink-0" alt="Logo" />
+      <span class="text-white font-semibold truncate">Ticket Tracking</span>
+    <% end %>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="flex-1 overflow-y-auto p-3 space-y-1">
+    <!-- Projects Section -->
+    <div>
+      <div class="flex items-center justify-between px-2 py-1 mb-1">
+        <button
+          onclick="toggleSidebarProjects()"
+          class="cursor-pointer flex items-center gap-1.5 text-xs uppercase tracking-wider font-semibold text-gray-400 hover:text-white transition">
+          <svg id="projects-chevron" class="w-3 h-3 transition-transform duration-200"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+          </svg>
+          Projects
+        </button>
+        <% if current_user.manager? %>
+          <%= link_to new_project_path,
+              title: "New Project",
+              class: "flex items-center justify-center w-6 h-6 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition text-lg leading-none font-light" do %>
+            +
+          <% end %>
+        <% end %>
+      </div>
+
+      <div id="sidebar-projects" class="space-y-0.5 pl-2 overflow-hidden transition-all duration-200">
+        <% if @sidebar_projects.any? %>
+          <% @sidebar_projects.each do |project| %>
+            <%= link_to project_path(project),
+                class: "flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition truncate #{ defined?(@project) && @project&.id == project.id ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-400/20' : 'text-gray-300 hover:text-white hover:bg-white/10' }" do %>
+              <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0"></span>
+              <span class="truncate"><%= project.name %></span>
+            <% end %>
+          <% end %>
+        <% else %>
+          <p class="px-2 py-2 text-xs text-gray-500 italic">No projects yet.</p>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="border-t border-white/5 my-2"></div>
+
+    <!-- Profile -->
+    <%= link_to user_path(current_user),
+        class: "flex items-center gap-3 px-2 py-2 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/10 transition" do %>
+      <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+      Profile
+    <% end %>
+  </nav>
+
+  <!-- User info + Logout -->
+  <div class="p-3 border-t border-white/10 space-y-2">
+    <div class="flex items-center gap-2.5 px-2">
+      <div class="h-8 w-8 rounded-lg bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-bold border border-indigo-400/20 text-xs shrink-0">
+        <%= user_initials(current_user) %>
+      </div>
+      <div class="min-w-0">
+        <p class="text-white text-sm font-medium truncate"><%= current_user.name %></p>
+        <p class="text-gray-500 text-xs truncate capitalize"><%= current_user.role %></p>
+      </div>
+    </div>
+    <%= button_to "Logout", logout_path, method: :delete,
+        class: "cursor-pointer w-full text-center bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-400/20 px-3 py-2 rounded-lg text-sm transition" %>
+  </div>
+</aside>

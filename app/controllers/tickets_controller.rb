@@ -1,7 +1,8 @@
 class TicketsController < ApplicationController
   before_action :require_login
-  before_action :set_ticket, only: [ :show, :edit, :update ]
+  before_action :set_ticket, only: [ :show, :edit, :update, :update_status ]
   before_action :set_ticket_projects, only: [ :index, :new, :create ]
+  before_action :set_project_locked, only: [ :new, :create ]
   before_action :set_form_data, only: [ :new, :create, :edit, :update ]
 
   def index
@@ -27,7 +28,8 @@ class TicketsController < ApplicationController
       return
     end
 
-    @ticket = Ticket.new(project_id: @ticket_projects.first.id)
+    default_project_id = params[:project_id].presence || @ticket_projects.first.id
+    @ticket = Ticket.new(project_id: default_project_id)
   end
 
   def create
@@ -52,6 +54,23 @@ class TicketsController < ApplicationController
       redirect_to ticket_path(@ticket), notice: "Ticket created successfully."
     else
       render :new, status: :unprocessable_entity
+    end
+  end
+
+  def update_status
+    ensure_ticket_access!
+    return if performed?
+
+    new_status = params[:status].to_s
+    unless Ticket.statuses.key?(new_status)
+      render json: { success: false, error: "Invalid status" }, status: :unprocessable_entity
+      return
+    end
+
+    if @ticket.update(status: new_status)
+      render json: { success: true, status: new_status }
+    else
+      render json: { success: false, errors: @ticket.errors.full_messages }, status: :unprocessable_entity
     end
   end
 
@@ -89,12 +108,22 @@ class TicketsController < ApplicationController
         .distinct
   end
 
+    def set_project_locked
+      params[:project_id].present? || params[:locked_project_id].present?
+    end
+
     def set_form_data
       # show users of that ticket’s project
       if action_name.in?([ "edit", "update" ]) && @ticket
+        # edit/update: show only the users that belong to this ticket’s project
         @assignable_users = @ticket.project.assignable_users
+      elsif @project_locked
+        # new/create with a fixed project: show users for that one project
+        locked_id = (params[:project_id] || params[:locked_project_id]).to_i
+        locked_project = @ticket_projects.find { |p| p.id == locked_id }
+        @assignable_users = locked_project&.assignable_users || []
       else
-        # show users of all projects (grouped) for dropdown selection
+        # new/create without a locked project: group users by project for dynamic dropdown
         @project_users_by_id = {}
         @ticket_projects.each do |project|
           @project_users_by_id[project.id] =

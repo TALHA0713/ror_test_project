@@ -1,2 +1,2 @@
 web: bin/rails server
-css: bin/rails tailwindcss:watch
+css: sh -c "ACTIVE_ADMIN_PATH=$(bundle exec ruby -e 'print Gem.loaded_specs[%q(activeadmin)].full_gem_path') bundle exec tailwindcss -i app/assets/stylesheets/active_admin.css -o app/assets/builds/active_admin.css --minify --watch & bundle exec tailwindcss -i app/assets/tailwind/application.css -o app/assets/builds/tailwind.css --minify --watch & wait"

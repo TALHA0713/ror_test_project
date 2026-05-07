@@ -11,6 +11,30 @@ class Attachment < ApplicationRecord
   validates :file_name, presence: true
   validates :file_path, presence: true
 
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[
+      id
+      ticket_id
+      comment_id
+      uploaded_by_user_id
+      file_name
+      file_path
+      file_size
+      mime_type
+      created_at
+      updated_at
+      id_value
+    ]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    %w[
+      ticket
+      comment
+      uploaded_by_user
+    ]
+  end
+
   # Saves uploaded files for a ticket or a comment.
   # `record` can be a Ticket or a Comment (both have has_many :attachments).
   def self.save_files_for(record, files, user)

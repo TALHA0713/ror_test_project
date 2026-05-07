@@ -7,6 +7,19 @@ class ProjectMember < ApplicationRecord
   after_create :on_added_to_project
   after_destroy :on_removed_from_project
 
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[
+      id
+      project_id
+      user_id
+      is_active
+      joined_at
+      created_at
+      updated_at
+      id_value
+    ]
+  end
+
   private
   def on_added_to_project
     user.update!(

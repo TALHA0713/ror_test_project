@@ -41,4 +41,29 @@ class User < ApplicationRecord
   def active_project_member_for(project)
     project_members.find_by(project: project, is_active: true)
   end
+
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[
+      id
+      name
+      email
+      role
+      is_active
+      created_at
+      updated_at
+      id_value
+    ]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    %w[
+      project_members
+      projects
+      created_projects
+      created_tickets
+      assigned_tickets
+      comments
+      uploaded_attachments
+    ]
+  end
 end

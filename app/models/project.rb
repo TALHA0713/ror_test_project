@@ -23,4 +23,25 @@ class Project < ApplicationRecord
   def next_ticket_no
     (tickets.maximum(:ticket_no) || 0) + 1
   end
+
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[
+      id
+      name
+      description
+      created_by_user_id
+      created_at
+      updated_at
+      id_value
+    ]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    %w[
+      created_by_user
+      project_members
+      users
+      tickets
+    ]
+  end
 end

@@ -60,6 +60,25 @@ class ApplicationController < ActionController::Base
   def render_not_found
     render "errors/not_found", status: :not_found
   end
+
+  def authenticate_user!
+    return if current_user
+
+    redirect_to login_path, alert: "Please log in first."
+  end
+
+  def authenticate_admin_user!
+    authenticate_user!
+    return if performed?
+
+    unless current_user&.manager? && current_user.is_active?
+      redirect_to root_path, alert: "You are not allowed to access admin."
+    end
+  end
+
+  def current_admin_user
+    current_user
+  end
 end
 
 # gems devise

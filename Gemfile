@@ -70,3 +70,4 @@ end
 
 gem "tailwindcss-rails", "~> 4.4"
 gem "pry", "~> 0.14.1"
+gem "activeadmin", "~> 4.0.0.beta22"

@@ -68,4 +68,34 @@ class Ticket < ApplicationRecord
 
     errors.add(:assigned_to_user_id, "must belong to the selected project")
   end
+
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[
+      id
+      project_id
+      assigned_to_user_id
+      created_by_user_id
+      title
+      description
+      ticket_no
+      ticket_type
+      priority
+      status
+      due_date
+      closed_at
+      created_at
+      updated_at
+      id_value
+    ]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    %w[
+      project
+      created_by_user
+      assigned_to_user
+      comments
+      attachments
+    ]
+  end
 end
